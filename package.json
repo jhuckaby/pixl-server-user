@@ -1,0 +1,30 @@
+{
+	"name": "pixl-server-user",
+	"version": "1.0.0",
+	"description": "A basic user login and session management system for the pixl-server framework.",
+	"author": "Joseph Huckaby <jhuckaby@gmail.com>",
+	"homepage": "https://github.com/jhuckaby/pixl-server-user",
+	"license": "MIT",
+	"main": "user.js",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jhuckaby/pixl-server-user"
+	},
+	"bugs": {
+		"url": "https://github.com/jhuckaby/pixl-server-user/issues"
+	},
+	"keywords": [
+		"user",
+		"login",
+		"session"
+	],
+	"dependencies": {
+		"pixl-server": "*",
+		"pixl-class": "*",
+		"pixl-tools": "*",
+		"pixl-mail": "*"
+	},
+	"devDependencies": {
+		
+	}
+}
