@@ -22,6 +22,7 @@ module.exports = Class.create({
 		"free_accounts": 0,
 		"sort_global_users": 1,
 		"valid_username_match": "^[\\w\\-\\.]+$",
+		"block_username_match": "^(abuse|admin|administrator|localhost|nobody|noreply|root|support|sysadmin|webmaster|www)$",
 		"email_templates": {
 			"welcome_new_user": "",
 			"changed_password": "",
@@ -52,6 +53,7 @@ module.exports = Class.create({
 		
 		// cache this from config
 		this.usernameMatch = new RegExp( this.config.get('valid_username_match') );
+		this.usernameBlock = new RegExp( this.config.get('block_username_match'), "i" );
 		
 		// startup complete
 		callback();
@@ -60,7 +62,7 @@ module.exports = Class.create({
 	normalizeUsername: function(username) {
 		// lower-case, strip all non-alpha
 		if (!username) return '';
-		return username.toLowerCase().replace(/\W+/g, '');
+		return username.toString().toLowerCase().replace(/\W+/g, '');
 	},
 	
 	api_create: function(args, callback) {
@@ -80,10 +82,14 @@ module.exports = Class.create({
 			password: /.+/
 		}, callback)) return;
 		
+		if (user.username.toString().match(this.usernameBlock)) {
+			return this.doError('user', "Username is blocked: " + user.username, callback);
+		}
+		
 		// first, make sure user doesn't already exist
 		this.storage.get(path, function(err, old_user) {
 			if (old_user) {
-				return self.doError('user_exists', "User already exists: " + user.username, callback);
+				return self.doError('user', "User already exists: " + user.username, callback);
 			}
 			
 			// now we can create the user
