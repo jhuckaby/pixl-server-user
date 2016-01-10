@@ -8,6 +8,7 @@ var Class = require("pixl-class");
 var Component = require("pixl-server/component");
 var Tools = require("pixl-tools");
 var Mailer = require('pixl-mail');
+var Request = require('pixl-request');
 
 module.exports = Class.create({
 	
@@ -42,8 +43,9 @@ module.exports = Class.create({
 		// register our class as an API namespace
 		this.server.API.addNamespace( "user", "api_", this );
 		
-		// we'll need this frequently, so add a local reference
+		// add local references to other components
 		this.storage = this.server.Storage;
+		this.web = this.server.WebServer;
 		
 		// setup SMTP mailer
 		this.mail = new Mailer( this.config.get('smtp_hostname') || this.server.config.get('smtp_hostname') || "127.0.0.1" );
@@ -97,7 +99,7 @@ module.exports = Class.create({
 			user.created = user.modified = Tools.timeNow(true);
 			user.salt = Tools.generateUniqueID( 64, user.username );
 			user.password = Tools.digestHex( '' + user.password + user.salt );
-			user.privileges = self.config.get('default_privileges') || {};
+			user.privileges = Tools.copyHash( self.config.get('default_privileges') || {} );
 			
 			args.user = user;
 			
@@ -731,7 +733,7 @@ module.exports = Class.create({
 				new_user.created = new_user.modified = Tools.timeNow(true);
 				new_user.salt = Tools.generateUniqueID( 64, new_user.username );
 				new_user.password = Tools.digestHex( '' + new_user.password + new_user.salt );
-				new_user.privileges = new_user.privileges || self.config.get('default_privileges') || {};
+				new_user.privileges = new_user.privileges || Tools.copyHash( self.config.get('default_privileges') || {} );
 				
 				args.admin_user = admin_user;
 				args.session = session;
@@ -1028,6 +1030,193 @@ module.exports = Class.create({
 				} ); // loaded users
 			} ); // got username list
 		} ); // loaded session
+	},
+	
+	api_external_login: function(args, callback) {
+		// query external user management system for login
+		var self = this;
+		var url = this.config.get('external_user_api');
+		if (!url) return this.doError('user', "No external_user_api config param set.", callback);
+		
+		this.logDebug(6, "Externally logging in via: " + url, args.request.headers);
+		
+		// must pass along cookie and user-agent
+		var request = new Request( args.request.headers['user-agent'] || 'PixlUser API' );
+		request.get( url, {
+			headers: { 'Cookie': args.request.headers['cookie'] || args.params.cookie || args.query.cookie || '' }
+		}, 
+		function(err, resp, data) {
+			// check for error
+			if (err) return self.doError('user', err, callback);
+			if (resp.statusCode != 200) {
+				return self.doError('user', "Bad HTTP Response: " + resp.statusMessage, callback);
+			}
+			
+			var json = null;
+			try { json = JSON.parse( data.toString() ); }
+			catch (err) {
+				return self.doError('user', "Failed to parse JSON response: " + err, callback);
+			}
+			var code = json.code || json.Code;
+			if (code) {
+				return self.doError('user', "External API Error: " + (json.description || json.Description), callback);
+			}
+			
+			self.logDebug(6, "Got response from external user system:", json);
+			
+			var username = json.username || json.Username || '';
+			var remote_user = json.user || json.User || null;
+			
+			if (username && remote_user) {
+				// user found in response!  update our records and create a local session
+				var path = 'users/' + self.normalizeUsername(username);
+				
+				if (!username.match(self.usernameMatch)) {
+					return self.doError('user', "Username contains illegal characters: " + username);
+				}
+				
+				self.logDebug(7, "Testing if user exists: " + path);
+				
+				self.storage.get(path, function(err, user) {
+					var new_user = false;
+					if (!user) {
+						// first time, create new user
+						self.logDebug(6, "Creating new user: " + username);
+						new_user = true;
+						user = {
+							username: username,
+							active: 1,
+							created: Tools.timeNow(true),
+							modified: Tools.timeNow(true),
+							salt: Tools.generateUniqueID( 64, username ),
+							password: Tools.generateUniqueID(64), // unused
+							privileges: Tools.copyHash( self.config.get('default_privileges') || {} )
+						};
+					} // new user
+					else {
+						self.logDebug(7, "User already exists: " + username);
+						if (user.force_password_reset) {
+							return self.doError('login', "Account is locked out.  Please reset your password to unlock it.", callback);
+						}
+						if (!user.active) {
+							return self.doError('login', "User account is disabled: " + username, callback);
+						}
+						
+						// must reset all privileges here, as remote system may delete keys when privs are revoked
+						for (var key in user.privileges) {
+							user.privileges[key] = 0;
+						}
+					}
+					
+					// sync user info
+					user.full_name = remote_user.full_name || remote_user.FullName || username;
+					user.email = remote_user.email || remote_user.Email || (username + '@' + self.server.hostname);
+					
+					// copy over privileges
+					var privs = remote_user.privileges || remote_user.Privileges || {};
+					for (var key in privs) {
+						var ckey = key.replace(/\W+/g, '_').toLowerCase();
+						user.privileges[ckey] = privs[key] ? 1 : 0;
+					}
+					
+					// copy over avatar url
+					user.avatar = json.avatar || json.Avatar || '';
+					
+					// save user locally
+					self.storage.put( path, user, function(err) {
+						if (err) return self.doError('user', "Failed to create user: " + err, callback);
+						
+						// copy to args for logging
+						args.user = user;
+						
+						if (new_user) {
+							self.logDebug(6, "Successfully created user: " + username);
+							self.logTransaction('user_create', username, 
+								self.getClientInfo(args, { user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } ) }));
+						}
+						
+						// now perform a local login
+						self.fireHook('before_login', args, function(err) {
+							if (err) {
+								return self.doError('login', "Failed to login: " + err, callback);
+							}
+							
+							// now create session
+							var now = Tools.timeNow(true);
+							var expiration_date = Tools.normalizeTime(
+								now + (86400 * self.config.get('session_expire_days')),
+								{ hour: 0, min: 0, sec: 0 }
+							);
+							
+							// create session id and object
+							var session_id = Tools.generateUniqueID( 64, username );
+							var session = {
+								id: session_id,
+								username: username,
+								ip: args.ip,
+								useragent: args.request.headers['user-agent'],
+								created: now,
+								modified: now,
+								expires: expiration_date
+							};
+							self.logDebug(6, "Logging user in: " + username + ": New Session ID: " + session_id, session);
+							
+							// store session object
+							self.storage.put('sessions/' + session_id, session, function(err, data) {
+								if (err) {
+									return self.doError('user', "Failed to create session: " + err, callback);
+								}
+								
+								// copy to args to logging
+								args.session = session;
+								
+								self.logDebug(6, "Successfully logged in", username);
+								self.logTransaction('user_login', username, self.getClientInfo(args));
+								
+								// set session expiration
+								self.storage.expire( 'sessions/' + session_id, expiration_date );
+								
+								callback( Tools.mergeHashes({ 
+									code: 0, 
+									username: username,
+									user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } ), 
+									session_id: session_id 
+								}, args.resp || {}) );
+								
+								self.fireHook('after_login', args);
+								
+								// add to master user list in the background
+								if (new_user) {
+									if (self.config.get('sort_global_users')) {
+										self.storage.listInsertSorted( 'global/users', { username: username }, ['username', 1], function(err) {
+											if (err) self.logError( 1, "Failed to add user to master list: " + err );
+											self.fireHook('after_create', args);
+										} );
+									}
+									else {
+										self.storage.listUnshift( 'global/users', { username: username }, function(err) {
+											if (err) self.logError( 1, "Failed to add user to master list: " + err );
+											self.fireHook('after_create', args);
+										} );
+									}
+								} // new user
+								
+							} ); // save session
+						} ); // before_login
+					} ); // save user
+				} ); // user get
+			} // user is logged in
+			else {
+				// API must require a browser redirect, so pass back to client
+				// add our encoded self URL onto end of redirect URL
+				var url = json.location || json.Location;
+				url += encodeURIComponent( self.web.getSelfURL(args.request, '/') );
+				
+				self.logDebug(6, "Browser redirect required: " + url);
+				
+				callback({ code: 0, location: url });
+			}
+		} );
 	},
 	
 	sendEmail: function(name, args, callback) {
