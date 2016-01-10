@@ -1101,16 +1101,16 @@ module.exports = Class.create({
 						if (!user.active) {
 							return self.doError('login', "User account is disabled: " + username, callback);
 						}
-						
-						// must reset all privileges here, as remote system may delete keys when privs are revoked
-						for (var key in user.privileges) {
-							user.privileges[key] = 0;
-						}
 					}
 					
 					// sync user info
 					user.full_name = remote_user.full_name || remote_user.FullName || username;
 					user.email = remote_user.email || remote_user.Email || (username + '@' + self.server.hostname);
+					
+					// must reset all privileges here, as remote system may delete keys when privs are revoked
+					for (var key in user.privileges) {
+						user.privileges[key] = 0;
+					}
 					
 					// copy over privileges
 					var privs = remote_user.privileges || remote_user.Privileges || {};
