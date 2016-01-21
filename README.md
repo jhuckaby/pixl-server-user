@@ -13,67 +13,67 @@ This document assumes you are already familiar with [pixl-server](https://www.np
 Use [npm](https://www.npmjs.com/) to install the module:
 
 ```
-	npm install pixl-server pixl-server-storage pixl-server-web pixl-server-api pixl-server-user
+npm install pixl-server pixl-server-storage pixl-server-web pixl-server-api pixl-server-user
 ```
 
 Here is a simple usage example.  Note that the component's official name is `User`, so that is what you should use for the configuration key, and for gaining access to the component via your server object.
 
 ```javascript
-	var PixlServer = require('pixl-server');
-	var server = new PixlServer({
+var PixlServer = require('pixl-server');
+var server = new PixlServer({
+	
+	__name: 'MyServer',
+	__version: "1.0",
+	
+	config: {
+		"log_dir": "/var/log",
+		"debug_level": 9,
 		
-		__name: 'MyServer',
-		__version: "1.0",
-		
-		config: {
-			"log_dir": "/var/log",
-			"debug_level": 9,
-			
-			"Storage": {
-				"engine": "File",
-				"File": {
-					"base_dir": "/var/data/myserver"
-				}
-			},
-			
-			"WebServer": {
-				"http_port": 80,
-				"http_htdocs_dir": "/var/www/html"
-			},
-			
-			"API": {
-				"base_uri": "/api"
-			},
-			
-			"User": {
-				"free_accounts": 0,
-				"sort_global_users": 1
+		"Storage": {
+			"engine": "File",
+			"File": {
+				"base_dir": "/var/data/myserver"
 			}
 		},
 		
-		components: [
-			require('pixl-server-storage'),
-			require('pixl-server-web'),
-			require('pixl-server-api'),
-			require('pixl-server-user')
-		]
+		"WebServer": {
+			"http_port": 80,
+			"http_htdocs_dir": "/var/www/html"
+		},
 		
-	});
+		"API": {
+			"base_uri": "/api"
+		},
+		
+		"User": {
+			"free_accounts": 0,
+			"sort_global_users": 1
+		}
+	},
 	
-	server.startup( function() {
-		// server startup complete
-	} );
-```
-
-Notice how we are loading the [pixl-server](https://www.npmjs.com/package/pixl-server) parent module, and then loading our components into the `components` array, with `pixl-server-user` at the very bottom:
-
-```javascript
 	components: [
 		require('pixl-server-storage'),
 		require('pixl-server-web'),
 		require('pixl-server-api'),
 		require('pixl-server-user')
 	]
+	
+});
+
+server.startup( function() {
+	// server startup complete
+} );
+```
+
+Notice how we are loading the [pixl-server](https://www.npmjs.com/package/pixl-server) parent module, and then loading our components into the `components` array, with `pixl-server-user` at the very bottom:
+
+```javascript
+components: [
+	require('pixl-server-storage'),
+	require('pixl-server-web'),
+	require('pixl-server-api'),
+	require('pixl-server-user')
+]
 ```
 
 This example demonstrates a very simple user manager implementation, which will accept JSON formatted HTTP POSTs to URIs such as `/api/user/create` and `/api/user/login`, and will send back serialized JSON responses.
@@ -113,11 +113,11 @@ The `smtp_hostname` property specifies the SMTP (outgoing mail) server to use wh
 The `email_templates` property should be an object containing filesystem paths to e-mail templates, for each of the following e-mails: `welcome_new_user`, `changed_password` and `recover_password`.  Example:
 
 ```javascript
-	"email_templates": {
-		"welcome_new_user": "conf/emails/welcome_new_user.txt",
-		"changed_password": "conf/emails/changed_password.txt",
-		"recover_password": "conf/emails/recover_password.txt"
-	}
+"email_templates": {
+	"welcome_new_user": "conf/emails/welcome_new_user.txt",
+	"changed_password": "conf/emails/changed_password.txt",
+	"recover_password": "conf/emails/recover_password.txt"
+}
 ```
 
 For details, see the [Emails](#emails) section below.
@@ -127,11 +127,11 @@ For details, see the [Emails](#emails) section below.
 The `default_privileges` property should be an object containing any privileges you want added to new user accounts by default.  Privileges are freeform key/value pairs, and up to you to define.  Example:
 
 ```javascript
-	"default_privileges": {
-		"admin": 0,
-		"view_things": 1,
-		"edit_things": 0
-	}
+"default_privileges": {
+	"admin": 0,
+	"view_things": 1,
+	"edit_things": 0
+}
 ```
 
 The only predefined privilege is `admin`, which signifies the account is a full administrator.  If this property is set to `1` on a user account, then they have access to all the admin-level API calls.
@@ -141,21 +141,21 @@ The only predefined privilege is `admin`, which signifies the account is a full 
 User accounts are stored using the [pixl-server-storage](https://www.npmjs.com/package/pixl-server-storage) component.  They are identified using the following path: `users/USERNAME` where `USERNAME` is the lower-case name of the user.  A typical user record looks like this:
 
 ```javascript
-	{
-		"username": "tcruise",
-		"email": "tcruise@hollywood.com",
-		"full_name": "Tom Cruise",
-		"active": "1",
-		"modified": 1433735738,
-		"created": 1433705544,
-		"password": "1190a32e21627477f807294edfc7e533bb3ec58afbe5247a58474cc57f484031",
-		"salt": "7210b89f03013272dffc3ba0b48b4de6a1b10bdc9ead535744297adb022be09e",
-		"privileges": {
-			"admin": 0,
-			"view_things": 1,
-			"edit_things": 0
-		}
+{
+	"username": "tcruise",
+	"email": "tcruise@hollywood.com",
+	"full_name": "Tom Cruise",
+	"active": "1",
+	"modified": 1433735738,
+	"created": 1433705544,
+	"password": "1190a32e21627477f807294edfc7e533bb3ec58afbe5247a58474cc57f484031",
+	"salt": "7210b89f03013272dffc3ba0b48b4de6a1b10bdc9ead535744297adb022be09e",
+	"privileges": {
+		"admin": 0,
+		"view_things": 1,
+		"edit_things": 0
 	}
+}
 ```
 
 The `username`, `email`, and `full_name` values are passed in directly from the APIs ([create](#create), [update](#update), [admin_create](#admin_create) and/or [admin_update](#admin_update)).
@@ -173,20 +173,20 @@ In general, as long as these standard properties are preserved, the user records
 When new users are first created, their usernames are added to a single master list.  This is stored in the [pixl-server-storage](https://www.npmjs.com/package/pixl-server-storage) component under the path: `global/users`.  It contains only usernames and nothing else:
 
 ```javascript
-	[
-		{
-			"username": "redbird262"
-		},
-		{
-			"username": "tcruise"
-		},
-		{
-			"username": "whiteduck152"
-		},
-		{
-			"username": "yellowmouse910"
-		}
-	]
+[
+	{
+		"username": "redbird262"
+	},
+	{
+		"username": "tcruise"
+	},
+	{
+		"username": "whiteduck152"
+	},
+	{
+		"username": "yellowmouse910"
+	}
+]
 ```
 
 This data is used by the [admin_get_users](#admin_get_users) API call, to render a page of users to a client UI using pagination.  You can also fetch data from this list for your own app (newsletter?).
@@ -198,11 +198,11 @@ If your configuration has the [sort_global_users](#sort_global_users) key set to
 Each user record has a `privileges` object, which can contain anything your application requires.  The only property used by the library is `admin`, which specifies if the user is an administrator or not.  Example:
 
 ```javascript
-	"privileges": {
-		"admin": 0,
-		"view_things": 1,
-		"edit_things": 0
-	}
+"privileges": {
+	"admin": 0,
+	"view_things": 1,
+	"edit_things": 0
+}
 ```
 
 The other properties are yours to define (in the [default_privileges](#default_privileges) configuration object), and then update with the [admin_update](#admin_update) API.
@@ -214,15 +214,15 @@ A user cannot set or update his/her own `privileges` object using the [create](#
 When a user logs in with the [login](#login) API, a new session object is created, and stored via the [pixl-server-storage](https://www.npmjs.com/package/pixl-server-storage) component.  Session paths follow this pattern: `sessions/SESSION_ID` where `SESSION_ID` is a randomly generated unique ID.  Here is an example record:
 
 ```javascript
-	{
-		"id": "099db662412794c89a8480b558cf7655c25863b12b4c23a4d3415905f7c78f5f",
-		"username": "jhuckaby",
-		"ip": "127.0.0.1",
-		"useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3",
-		"created": 1433705951,
-		"modified": 1433705951,
-		"expires": 1436297951
-	}
+{
+	"id": "099db662412794c89a8480b558cf7655c25863b12b4c23a4d3415905f7c78f5f",
+	"username": "jhuckaby",
+	"ip": "127.0.0.1",
+	"useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3",
+	"created": 1433705951,
+	"modified": 1433705951,
+	"expires": 1436297951
+}
 ```
 
 The `id` is the randomly generated Session ID.  The `username` is the user who opened the session.  The `ip` and `useragent` are collected from the HTTP request that opened the session.  The `created` and `modified` dates are what you would expect.  The `expires` date is when the session expires.  This is controlled by the [session_expire_days](#session_expire_days) configuration parameter.
@@ -238,11 +238,11 @@ The user management system can be configured to send e-mails to users based on v
 Then you need to provide up to three e-mail template files.  These are used to generate the headers and body of the e-mails.  They use a [placeholder substitution system](https://www.npmjs.com/package/pixl-tools#substitute) for bits of content such as the user's name.  You specify the paths to the e-mail template files using the [email_templates](#email_templates) configuration object:
 
 ```javascript
-	"email_templates": {
-		"welcome_new_user": "conf/emails/welcome_new_user.txt",
-		"changed_password": "conf/emails/changed_password.txt",
-		"recover_password": "conf/emails/recover_password.txt"
-	}
+"email_templates": {
+	"welcome_new_user": "conf/emails/welcome_new_user.txt",
+	"changed_password": "conf/emails/changed_password.txt",
+	"recover_password": "conf/emails/recover_password.txt"
+}
 ```
 
 To disable an e-mail, simply unset the corresponding configuration property (set it to a blank string, or remove it entirely).
@@ -339,23 +339,23 @@ When your application is first installed, you need to execute a few setup tasks.
 You'll want to create an initial administrator user, who has full permissions.  This is typically done by the following code inserted into a command-line script which uses the [Standalone Mode](https://www.npmjs.com/package/pixl-server-storage#standalone-mode) of the [pixl-server-storage](https://www.npmjs.com/package/pixl-server-storage) component.
 
 ```javascript
-	var user = {
-		username: username,
-		password: password,
-		full_name: "Administrator",
-		email: "admin@myapp.com"
-	};
-	
-	user.active = 1;
-	user.created = user.modified = Tools.timeNow(true);
-	user.salt = Tools.generateUniqueID( 64, user.username );
-	user.password = Tools.digestHex( '' + user.password + user.salt );
-	user.privileges = { admin: 1 };
-	
-	storage.put( 'users/' + username, user, function(err) {
-		if (err) throw err;
-		console.log( "Administrator '"+username+"' created successfully.\n" );
-	} );
+var user = {
+	username: username,
+	password: password,
+	full_name: "Administrator",
+	email: "admin@myapp.com"
+};
+
+user.active = 1;
+user.created = user.modified = Tools.timeNow(true);
+user.salt = Tools.generateUniqueID( 64, user.username );
+user.password = Tools.digestHex( '' + user.password + user.salt );
+user.privileges = { admin: 1 };
+
+storage.put( 'users/' + username, user, function(err) {
+	if (err) throw err;
+	console.log( "Administrator '"+username+"' created successfully.\n" );
+} );
 ```
 
 You'll need to import the [pixl-tools](https://www.npmjs.com/package/pixl-tools) package for the [timeNow()](https://www.npmjs.com/package/pixl-tools#timenow), [generateUniqueID()](https://www.npmjs.com/package/pixl-tools#generateuniqueid) and [digestHex()](https://www.npmjs.com/package/pixl-tools#digesthex) functions used in the example above.
@@ -367,10 +367,10 @@ The master user list, which is located in the storage component under `global/us
 The user list contains only usernames, so the list items are tiny in size.  It is therefore much more efficient if the list page size was something more like `100`.  You cannot change the list page size after the fact, so you must do it at initial server install.  To do this, add something like this to your command-line setup / install script:
 
 ```javascript
-	storage.listCreate( 'global/users', { list_size: 100 }, function(err) {
-		if (err) throw err;
-		console.log( "Global user list created successfully.\n" );
-	} );
+storage.listCreate( 'global/users', { list_size: 100 }, function(err) {
+	if (err) throw err;
+	console.log( "Global user list created successfully.\n" );
+} );
 ```
 
 ## Storage Maintenance
@@ -378,9 +378,9 @@ The user list contains only usernames, so the list items are tiny in size.  It i
 In order for your sessions (and any other data records that you set expiration dates on) to be properly deleted when they expire, you need to enable maintenance on the storage component.  This is done by setting the [maintenance](https://www.npmjs.com/package/pixl-server-storage#maintenance) storage configuration property to a `HH::MM` formatted string, indicating the time of day at which it will perform its cleanup:
 
 ```javascript
-	{
-		"maintenance": "04:30" // run daily at 4:30 AM
-	}
+{
+	"maintenance": "04:30" // run daily at 4:30 AM
+}
 ```
 
 For more information, please see the [Daily Maintenance](https://www.npmjs.com/package/pixl-server-storage#daily-maintenance) section of the [pixl-server-storage](https://www.npmjs.com/package/pixl-server-storage) component docs.
@@ -405,12 +405,12 @@ Here is the full list of APIs:
 Create a new user: `POST /api/user/create`
 
 ```javascript
-	{
-		"username": "tcruise",
-		"email": "tcruise@hollywood.com",
-		"full_name": "Tom Cruise",
-		"password": "topGun!"
-	}
+{
+	"username": "tcruise",
+	"email": "tcruise@hollywood.com",
+	"full_name": "Tom Cruise",
+	"password": "topGun!"
+}
 ```
 
 The `create` API creates a new user account, but is only accessible if the [free_accounts](#free_accounts) configuration property is set to `true`.  No session is required for this.  The required JSON properties in the POST data are `username` (must be alphanumeric), `email`, `full_name` and `password`.  Any unknown properties are also stored in the user record.
@@ -418,9 +418,9 @@ The `create` API creates a new user account, but is only accessible if the [free
 Example successful response:
 
 ```javascript
-	{
-		"code": 0
-	}
+{
+	"code": 0
+}
 ```
 
 ## login
@@ -428,10 +428,10 @@ Example successful response:
 Validate user and create a new session: `POST /api/user/login`
 
 ```javascript
-	{
-		"username": "tcruise",
-		"password": "topGun!"
-	}
+{
+	"username": "tcruise",
+	"password": "topGun!"
+}
 ```
 
 The `login` API validates the user account exists and is active, and makes sure the provided password matches the hash-digested one we have on file.  If everything checks out, a new session is created, and the Session ID is passed back to the client, along with the user record (sans password and salt).
@@ -439,22 +439,22 @@ The `login` API validates the user account exists and is active, and makes sure 
 Example successful response:
 
 ```javascript
-	{
-		"code": 0,
+{
+	"code": 0,
+	"username": "tcruise",
+	"user": {
 		"username": "tcruise",
-		"user": {
-			"username": "tcruise",
-			"email": "tcruise@hollywood.com",
-			"full_name": "Tom Cruise",
-			"password": "topGun!",
-			"privileges": {
-				"admin": 0,
-				"view_things": 1,
-				"edit_things": 0
-			}
-		},
-		"session_id": "099db662412794c89a8480b558cf7655c25863b12b4c23a4d3415905f7c78f5f"
-	}
+		"email": "tcruise@hollywood.com",
+		"full_name": "Tom Cruise",
+		"password": "topGun!",
+		"privileges": {
+			"admin": 0,
+			"view_things": 1,
+			"edit_things": 0
+		}
+	},
+	"session_id": "099db662412794c89a8480b558cf7655c25863b12b4c23a4d3415905f7c78f5f"
+}
 ```
 
 The returned `session_id` can then be used for subsequent API calls.
@@ -468,9 +468,9 @@ The `logout` API deletes an existing user session, effectively logging the user 
 Example successful response:
 
 ```javascript
-	{
-		"code": 0
-	}
+{
+	"code": 0
+}
 ```
 
 ## resume_session
@@ -482,17 +482,17 @@ The `resume_session` API reloads an existing user session, effectively allowing 
 Example successful response:
 
 ```javascript
-	{
-		"code": 0,
+{
+	"code": 0,
+	"username": "tcruise",
+	"user": {
 		"username": "tcruise",
-		"user": {
-			"username": "tcruise",
-			"email": "tcruise@hollywood.com",
-			"full_name": "Tom Cruise",
-			"password": "topGun!"
-		},
-		"session_id": "099db662412794c89a8480b558cf7655c25863b12b4c23a4d3415905f7c78f5f"
-	}
+		"email": "tcruise@hollywood.com",
+		"full_name": "Tom Cruise",
+		"password": "topGun!"
+	},
+	"session_id": "099db662412794c89a8480b558cf7655c25863b12b4c23a4d3415905f7c78f5f"
+}
 ```
 
 The returned `session_id` can then be used for subsequent API calls.
@@ -502,13 +502,13 @@ The returned `session_id` can then be used for subsequent API calls.
 Update user data: `POST /api/user/update`
 
 ```javascript
-	{
-		"username": "tcruise",
-		"email": "tcruise@hollywood.com",
-		"full_name": "Tom Cruise",
-		"old_password": "topGun!",
-		"new_password": "daysOfThunder!"
-	}
+{
+	"username": "tcruise",
+	"email": "tcruise@hollywood.com",
+	"full_name": "Tom Cruise",
+	"old_password": "topGun!",
+	"new_password": "daysOfThunder!"
+}
 ```
 
 The `update` API updates an existing user account.  Note that the `username` provided in the JSON POST data must match that of the active session.  A user may only update his/her own profile.  To change the account password, provide a new one in `new_password`.  Any unknown properties will be stored with the user record.
@@ -520,19 +520,19 @@ The API response also includes a copy of the updated user record, so you can ref
 Example successful response:
 
 ```javascript
-	{
-		"code": 0,
-		"user": {
-			"username": "tcruise",
-			"email": "tcruise@hollywood.com",
-			"full_name": "Tom Cruise",
-			"privileges": {
-				"admin": 0,
-				"view_things": 1,
-				"edit_things": 0
-			}
+{
+	"code": 0,
+	"user": {
+		"username": "tcruise",
+		"email": "tcruise@hollywood.com",
+		"full_name": "Tom Cruise",
+		"privileges": {
+			"admin": 0,
+			"view_things": 1,
+			"edit_things": 0
 		}
 	}
+}
 ```
 
 ## delete
@@ -540,10 +540,10 @@ Example successful response:
 Delete user account: `POST /api/user/delete`
 
 ```javascript
-	{
-		"username": "tcruise",
-		"password": "topGun!"
-	}
+{
+	"username": "tcruise",
+	"password": "topGun!"
+}
 ```
 
 The `delete` API permanently deletes a user account, and logs the user out (destroys the active session).  Both the `username` and `password` of the account must be provided by the client, and an active session ID must be found (the user must be logged in).  After this API returns, the client should destroy the Session ID, and return the user to the home or login screens.
@@ -551,9 +551,9 @@ The `delete` API permanently deletes a user account, and logs the user out (dest
 Example successful response:
 
 ```javascript
-	{
-		"code": 0
-	}
+{
+	"code": 0
+}
 ```
 
 ## forgot_password
@@ -561,10 +561,10 @@ Example successful response:
 Send e-mail to reset password: `POST /api/user/forgot_password`
 
 ```javascript
-	{
-		"username": "tcruise",
-		"email": "tcruise@hollywood.com"
-	}
+{
+	"username": "tcruise",
+	"email": "tcruise@hollywood.com"
+}
 ```
 
 The `forgot_password` API initiates the password recovery process for a user.  This is designed to be sent without an active session (user is logged out), and requires a `username` and `email`.  The username must match an active account, and the e-mail must match the address on file for the account (case-insensitive).
@@ -574,9 +574,9 @@ If everything checks out, the user is sent a [recover_password](#recover_passwor
 Example successful response:
 
 ```javascript
-	{
-		"code": 0
-	}
+{
+	"code": 0
+}
 ```
 
 ## reset_password
@@ -584,11 +584,11 @@ Example successful response:
 Complete the password reset process: `POST /api/user/reset_password`
 
 ```javascript
-	{
-		"username": "tcruise",
-		"key": "3a43167a326b1eccd1c752f72064875656d80144b6f9527a185f2f6ac0c04003",
-		"new_password": "missionImpossble!"
-	}
+{
+	"username": "tcruise",
+	"key": "3a43167a326b1eccd1c752f72064875656d80144b6f9527a185f2f6ac0c04003",
+	"new_password": "missionImpossble!"
+}
 ```
 
 The `reset_password` API completes the forgot password / reset password workflow, by actually changing the account password to a new one.  This API requires a special recovery key (`key`) which is obtained from the [recover_password](#recover_password) e-mail sent via the [forgot_password](#forgot_password) API.  The `username` must also match what is in the recovery record.  Specify the desired new account password in `new_password`.
@@ -596,9 +596,9 @@ The `reset_password` API completes the forgot password / reset password workflow
 Example successful response:
 
 ```javascript
-	{
-		"code": 0
-	}
+{
+	"code": 0
+}
 ```
 
 ## admin_create
@@ -606,18 +606,18 @@ Example successful response:
 Create user as an administrator: `POST /api/user/admin_create`
 
 ```javascript
-	{
-		"username": "tcruise",
-		"email": "tcruise@hollywood.com",
-		"full_name": "Tom Cruise",
-		"password": "topGun!",
-		"privileges": {
-			"admin": 0,
-			"view_things": 1,
-			"edit_things": 0
-		},
-		"send_email": true
-	}
+{
+	"username": "tcruise",
+	"email": "tcruise@hollywood.com",
+	"full_name": "Tom Cruise",
+	"password": "topGun!",
+	"privileges": {
+		"admin": 0,
+		"view_things": 1,
+		"edit_things": 0
+	},
+	"send_email": true
+}
 ```
 
 The `admin_create` API creates a new user account, but it is only accessible to administrators.  Also, this is the only way to create user accounts if the [free_accounts](#free_accounts) configuration parameter is set to `false`.
@@ -629,9 +629,9 @@ The `send_email` property is a boolean flag indicating whether the user should b
 Example successful response:
 
 ```javascript
-	{
-		"code": 0
-	}
+{
+	"code": 0
+}
 ```
 
 ## admin_update
@@ -639,17 +639,17 @@ Example successful response:
 Update any user as an administrator: `POST /api/user/admin_update`
 
 ```javascript
-	{
-		"username": "tcruise",
-		"email": "tcruise@hollywood.com",
-		"full_name": "Tom Cruise",
-		"new_password": "oblivion!",
-		"privileges": {
-			"admin": 0,
-			"view_things": 1,
-			"edit_things": 0
-		}
+{
+	"username": "tcruise",
+	"email": "tcruise@hollywood.com",
+	"full_name": "Tom Cruise",
+	"new_password": "oblivion!",
+	"privileges": {
+		"admin": 0,
+		"view_things": 1,
+		"edit_things": 0
 	}
+}
 ```
 
 The `admin_update` API updates any user, but it is only accessible to administrators.  Using this you can set *any* user properties on *any* account, including `privileges`, and reset passwords without also providing the current password (as is the case with the standard [update](#update) API).
@@ -659,19 +659,19 @@ The API response also includes a copy of the updated user record, so you can ref
 Example successful response:
 
 ```javascript
-	{
-		"code": 0,
-		"user": {
-			"username": "tcruise",
-			"email": "tcruise@hollywood.com",
-			"full_name": "Tom Cruise",
-			"privileges": {
-				"admin": 0,
-				"view_things": 1,
-				"edit_things": 0
-			}
+{
+	"code": 0,
+	"user": {
+		"username": "tcruise",
+		"email": "tcruise@hollywood.com",
+		"full_name": "Tom Cruise",
+		"privileges": {
+			"admin": 0,
+			"view_things": 1,
+			"edit_things": 0
 		}
 	}
+}
 ```
 
 ## admin_delete
@@ -679,9 +679,9 @@ Example successful response:
 Delete any user as an administrator: `POST /api/user/admin_delete`
 
 ```javascript
-	{
-		"username": "tcruise"
-	}
+{
+	"username": "tcruise"
+}
 ```
 
 The `admin_delete` API permanently deletes a user account, but it is only accessible to administrators.  Only the `username` of the account must be provided by the client.
@@ -689,9 +689,9 @@ The `admin_delete` API permanently deletes a user account, but it is only access
 Example successful response:
 
 ```javascript
-	{
-		"code": 0
-	}
+{
+	"code": 0
+}
 ```
 
 ## admin_get_user
@@ -699,9 +699,9 @@ Example successful response:
 Fetch a user record as an administrator: `POST /api/user/admin_get_user`
 
 ```javascript
-	{
-		"username": "tcruise"
-	}
+{
+	"username": "tcruise"
+}
 ```
 
 You can alternatively use HTTP GET for this API: `GET /api/user/admin_get_user?username=USERNAME`
@@ -711,19 +711,19 @@ The `admin_get_user` API fetches a single user record, for the purpose of displa
 Example successful response:
 
 ```javascript
-	{
-		"code": 0,
-		"user": {
-			"username": "tcruise",
-			"email": "tcruise@hollywood.com",
-			"full_name": "Tom Cruise",
-			"privileges": {
-				"admin": 0,
-				"view_things": 1,
-				"edit_things": 0
-			}
+{
+	"code": 0,
+	"user": {
+		"username": "tcruise",
+		"email": "tcruise@hollywood.com",
+		"full_name": "Tom Cruise",
+		"privileges": {
+			"admin": 0,
+			"view_things": 1,
+			"edit_things": 0
 		}
 	}
+}
 ```
 
 ## admin_get_users
@@ -731,10 +731,10 @@ Example successful response:
 Fetch multiple users as an administrator: `POST /api/user/admin_get_users`
 
 ```javascript
-	{
-		"offset": 0,
-		"limit": 50
-	}
+{
+	"offset": 0,
+	"limit": 50
+}
 ```
 
 You can alternatively use HTTP GET for this API: `GET /api/user/admin_get_users?offset=0&limit=50`
@@ -746,53 +746,53 @@ The API response will contain a `rows` array consisting of one element per user,
 Example successful response:
 
 ```javascript
-	{
-		"code": 0,
-		"rows": [
-			{
-				"username": "beautifulkoala110",
-				"active": 1,
-				"full_name": "Maurizio Ijsselstein",
-				"email": "maurizio.ijsselstein32@example.com",
-				"privileges": {
-					"admin": 0,
-					"edit_events": 0,
-					"edit_plugins": 0
-				},
-				"modified": 1433735643,
-				"created": 1433735643
+{
+	"code": 0,
+	"rows": [
+		{
+			"username": "beautifulkoala110",
+			"active": 1,
+			"full_name": "Maurizio Ijsselstein",
+			"email": "maurizio.ijsselstein32@example.com",
+			"privileges": {
+				"admin": 0,
+				"edit_events": 0,
+				"edit_plugins": 0
 			},
-			{
-				"username": "crazypeacock161",
-				"active": 1,
-				"full_name": "Franklin Duncan",
-				"email": "franklin.duncan29@example.com",
-				"privileges": {},
-				"modified": 1433733408,
-				"created": 1433733408
+			"modified": 1433735643,
+			"created": 1433735643
+		},
+		{
+			"username": "crazypeacock161",
+			"active": 1,
+			"full_name": "Franklin Duncan",
+			"email": "franklin.duncan29@example.com",
+			"privileges": {},
+			"modified": 1433733408,
+			"created": 1433733408
+		},
+		{
+			"username": "goldenpeacock287",
+			"active": 1,
+			"full_name": "Danielle George",
+			"email": "danielle.george99@example.com",
+			"privileges": {
+				"admin": 0,
+				"edit_events": 0,
+				"edit_plugins": 0
 			},
-			{
-				"username": "goldenpeacock287",
-				"active": 1,
-				"full_name": "Danielle George",
-				"email": "danielle.george99@example.com",
-				"privileges": {
-					"admin": 0,
-					"edit_events": 0,
-					"edit_plugins": 0
-				},
-				"modified": 1433735637,
-				"created": 1433735637
-			}
-		],
-		"list": {
-			"first_page": 0,
-			"last_page": 0,
-			"length": 3,
-			"page_size": 50,
-			"type": "list"
+			"modified": 1433735637,
+			"created": 1433735637
 		}
+	],
+	"list": {
+		"first_page": 0,
+		"last_page": 0,
+		"length": 3,
+		"page_size": 50,
+		"type": "list"
 	}
+}
 ```
 
 # Adding Your Own APIs
@@ -800,13 +800,13 @@ Example successful response:
 To add your own APIs, you should use the [pixl-server-api](https://www.npmjs.com/package/pixl-server-api) component.  You can call either `addHandler()` to register a single API handler method, or `addNamespace()` to declare an entire class as an API namespace (this is what the user component does).  Example:
 
 ```javascript
-	server.API.addHandler( 'my_custom_api', function(args, callback) {
-		// custom request handler for our API
-		callback({
-			code: 0,
-			description: "Success!"
-		});
-	} );
+server.API.addHandler( 'my_custom_api', function(args, callback) {
+	// custom request handler for our API
+	callback({
+		code: 0,
+		description: "Success!"
+	});
+} );
 ```
 
 See the [pixl-server-api](https://www.npmjs.com/package/pixl-server-api) documentation for more details.
@@ -816,14 +816,14 @@ See the [pixl-server-api](https://www.npmjs.com/package/pixl-server-api) documen
 To validate the current session, you can call the `loadSession()` method on the user component.  It should be accessible from your own component's API methods using this syntax:
 
 ```
-	this.server.User.loadSession(args, function(err, session, user) {
-		if (err) {
-			// an error occurred
-		}
-		else {
-			// valid session and user
-		}
-	} );
+this.server.User.loadSession(args, function(err, session, user) {
+	if (err) {
+		// an error occurred
+	}
+	else {
+		// valid session and user
+	}
+} );
 ```
 
 # Hooks
@@ -835,10 +835,10 @@ All the "before" hooks require you to fire a callback.  If you pass an error to 
 To register a hook, call the `registerHook()` method, and provide the hook name (see below) and your own callback function:
 
 ```javascript
-	this.server.User.registerHook( 'before_create', function(args, callback) {
-		// do something here
-		callback();
-	} );
+this.server.User.registerHook( 'before_create', function(args, callback) {
+	// do something here
+	callback();
+} );
 ```
 
 All hooks are passed an `args` object containing the following:
@@ -954,7 +954,7 @@ For more details on the server event log format, see the [Logging](https://www.n
 The `user_create` transaction log entry has the new username in the `msg` column, and the user's new record (sans password and salt), as well as the requesting IP and HTTP headers in the `data` column.  Example:
 
 ```
-[1433735672.387][2015-06-07 20:54:32][joeretina-2.local][User][transaction][user_create][yellowmouse910][{"user":{"username":"yellowmouse910","active":1,"full_name":"Anni Wirtanen","email":"anni.wirtanen78@example.com","privileges":{"admin":0,"edit_events":0,"edit_plugins":0},"modified":1433735672,"created":1433735672},"ip":"127.0.0.1","headers":{"host":"127.0.0.1:3012","accept":"text/plain, */*; q=0.01","x-session-id":"fb531a0886313888c3c08ba8a82031fb7a37b8d9ea979151f65f88b1a4f90b83","x-requested-with":"XMLHttpRequest","accept-encoding":"gzip, deflate","accept-language":"en-us","content-type":"application/json","origin":"http://127.0.0.1:3012","content-length":"188","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3","referer":"http://127.0.0.1:3012/","connection":"keep-alive","cookie":"__utma=96992031.1242794869.1372439571.1414895047.1414907019.4"}}]
+[1433735672.387][2015-06-07 20:54:32][joeretina-2.local][User][transaction][user_create][yellowmouse910][{"user":{"username":"yellowmouse910","active":1,"full_name":"Anni Wirtanen","email":"anni.wirtanen78@example.com","privileges":{"admin":0,"edit_events":0,"edit_plugins":0},"modified":1433735672,"created":1433735672},"ip":"127.0.0.1","headers":{"host":"127.0.0.1:3012","accept":"text/plain, */*; q=0.01","x-session-id":"fb531a0886313888c3c08ba8a82031fb7a37b8d9ea979151f65f88b1a4f90b83","x-requested-with":"XMLHttpRequest","accept-encoding":"gzip, deflate","accept-language":"en-us","content-type":"application/json","origin":"http://127.0.0.1:3012","content-length":"188","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3","referer":"http://127.0.0.1:3012/","connection":"keep-alive","cookie":"__utma=9692031.124279869.137249571.141495047.141407019.4"}}]
 ```
 
 ## user_login
@@ -962,7 +962,7 @@ The `user_create` transaction log entry has the new username in the `msg` column
 The `user_login` transaction log entry has the username in the `msg` column, and the user's IP and HTTP headers in the `data` column.  Example:
 
 ```
-[1433828230.675][2015-06-08 22:37:10][joeretina-2.local][User][transaction][user_login][jhuckaby][{"ip":"127.0.0.1","headers":{"host":"127.0.0.1:3012","accept":"text/plain, */*; q=0.01","x-session-id":"fb531a0886313888c3c08ba8a82031fb7a37b8d9ea979151f65f88b1a4f90b83","x-requested-with":"XMLHttpRequest","accept-language":"en-us","accept-encoding":"gzip, deflate","cache-control":"max-age=0","content-type":"application/json","origin":"http://127.0.0.1:3012","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3","referer":"http://127.0.0.1:3012/","content-length":"81","connection":"keep-alive","cookie":"__utma=96992031.1242794869.1372439571.1414895047.1414907019.4"}}]
+[1433828230.675][2015-06-08 22:37:10][joeretina-2.local][User][transaction][user_login][jhuckaby][{"ip":"127.0.0.1","headers":{"host":"127.0.0.1:3012","accept":"text/plain, */*; q=0.01","x-session-id":"fb531a0886313888c3c08ba8a82031fb7a37b8d9ea979151f65f88b1a4f90b83","x-requested-with":"XMLHttpRequest","accept-language":"en-us","accept-encoding":"gzip, deflate","cache-control":"max-age=0","content-type":"application/json","origin":"http://127.0.0.1:3012","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3","referer":"http://127.0.0.1:3012/","content-length":"81","connection":"keep-alive","cookie":"__utma=9692031.124294869.137439571.141495047.141907019.4"}}]
 ```
 
 ## user_logout
@@ -970,7 +970,7 @@ The `user_login` transaction log entry has the username in the `msg` column, and
 The `user_logout` transaction log entry has the username in the `msg` column, and the user's IP and HTTP headers in the `data` column.  Example:
 
 ```
-[1433705600.912][2015-06-07 12:33:20][joeretina-2.local][User][transaction][user_logout][jhuckaby][{"ip":"127.0.0.1","headers":{"host":"127.0.0.1:3012","accept":"text/plain, */*; q=0.01","x-session-id":"8ab04848093c063718fe5064e90ffad3dc2cbe48ad2a961f06e3ce4512ee84be","x-requested-with":"XMLHttpRequest","accept-encoding":"gzip, deflate","accept-language":"en-us","content-type":"application/json","origin":"http://127.0.0.1:3012","content-length":"81","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3","referer":"http://127.0.0.1:3012/","connection":"keep-alive","cookie":"__utma=96992031.1242794869.1372439571.1414895047.1414907019.4"}}]
+[1433705600.912][2015-06-07 12:33:20][joeretina-2.local][User][transaction][user_logout][jhuckaby][{"ip":"127.0.0.1","headers":{"host":"127.0.0.1:3012","accept":"text/plain, */*; q=0.01","x-session-id":"8ab04848093c063718fe5064e90ffad3dc2cbe48ad2a961f06e3ce4512ee84be","x-requested-with":"XMLHttpRequest","accept-encoding":"gzip, deflate","accept-language":"en-us","content-type":"application/json","origin":"http://127.0.0.1:3012","content-length":"81","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3","referer":"http://127.0.0.1:3012/","connection":"keep-alive","cookie":"__utma=9699231.124294869.137239571.141895047.141407019.4"}}]
 ```
 
 ## user_update
@@ -978,7 +978,7 @@ The `user_logout` transaction log entry has the username in the `msg` column, an
 The `user_update` transaction log entry has the username in the `msg` column, and the user's updated record (sans password and salt), as well as the requesting IP and HTTP headers in the `data` column.  Example:
 
 ```
-[1433735738.641][2015-06-07 20:55:38][joeretina-2.local][User][transaction][user_update][tcruise][{"user":{"username":"tcruise","email":"tcruise@hollywood.com","full_name":"Tom Cruise","active":"1","modified":1433735738,"created":1433705544,"privileges":{"admin":1,"edit_events":1,"edit_plugins":0},"joetest":12345},"ip":"127.0.0.1","headers":{"host":"127.0.0.1:3012","accept":"text/plain, */*; q=0.01","x-session-id":"fb531a0886313888c3c08ba8a82031fb7a37b8d9ea979151f65f88b1a4f90b83","x-requested-with":"XMLHttpRequest","accept-encoding":"gzip, deflate","accept-language":"en-us","content-type":"application/json","origin":"http://127.0.0.1:3012","content-length":"164","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3","referer":"http://127.0.0.1:3012/","connection":"keep-alive","cookie":"__utma=96992031.1242794869.1372439571.1414895047.1414907019.4"}}]
+[1433735738.641][2015-06-07 20:55:38][joeretina-2.local][User][transaction][user_update][tcruise][{"user":{"username":"tcruise","email":"tcruise@hollywood.com","full_name":"Tom Cruise","active":"1","modified":1433735738,"created":1433705544,"privileges":{"admin":1,"edit_events":1,"edit_plugins":0},"joetest":12345},"ip":"127.0.0.1","headers":{"host":"127.0.0.1:3012","accept":"text/plain, */*; q=0.01","x-session-id":"fb531a0886313888c3c08ba8a82031fb7a37b8d9ea979151f65f88b1a4f90b83","x-requested-with":"XMLHttpRequest","accept-encoding":"gzip, deflate","accept-language":"en-us","content-type":"application/json","origin":"http://127.0.0.1:3012","content-length":"164","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3","referer":"http://127.0.0.1:3012/","connection":"keep-alive","cookie":"__utma=9692031.124274869.137239571.141895047.141907019.4"}}]
 ```
 
 ## user_delete
@@ -986,7 +986,7 @@ The `user_update` transaction log entry has the username in the `msg` column, an
 The `user_delete` transaction log entry has the username in the `msg` column, and the user's IP and HTTP headers in the `data` column.  Example:
 
 ```
-[1433735602.883][2015-06-07 20:53:22][joeretina-2.local][User][transaction][user_delete][zgoldenlion329][{"ip":"127.0.0.1","headers":{"host":"127.0.0.1:3012","accept":"text/plain, */*; q=0.01","x-session-id":"fb531a0886313888c3c08ba8a82031fb7a37b8d9ea979151f65f88b1a4f90b83","x-requested-with":"XMLHttpRequest","accept-encoding":"gzip, deflate","accept-language":"en-us","content-type":"application/json","origin":"http://127.0.0.1:3012","content-length":"29","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3","referer":"http://127.0.0.1:3012/","connection":"keep-alive","cookie":"__utma=96992031.1242794869.1372439571.1414895047.1414907019.4"}}]
+[1433735602.883][2015-06-07 20:53:22][joeretina-2.local][User][transaction][user_delete][zgoldenlion329][{"ip":"127.0.0.1","headers":{"host":"127.0.0.1:3012","accept":"text/plain, */*; q=0.01","x-session-id":"fb531a0886313888c3c08ba8a82031fb7a37b8d9ea979151f65f88b1a4f90b83","x-requested-with":"XMLHttpRequest","accept-encoding":"gzip, deflate","accept-language":"en-us","content-type":"application/json","origin":"http://127.0.0.1:3012","content-length":"29","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3","referer":"http://127.0.0.1:3012/","connection":"keep-alive","cookie":"__utma=9699231.124274869.137249571.141485047.144907019.4"}}]
 ```
 
 ## user_forgot_password
@@ -994,7 +994,7 @@ The `user_delete` transaction log entry has the username in the `msg` column, an
 The `user_forgot_password` transaction log entry has the username in the `msg` column, and the user's recovery key in the `data` column as a property named `key` in the encoded JSON text.  Example:
 
 ```
-[1433735131.978][2015-06-07 20:45:31][joeretina-2.local][User][transaction][user_forgot_password][redsnake609][{"key":"7210b89f03013272dffc3ba0b48b4de6a1b10bdc9ead535744297adb022be09f","ip":"127.0.0.1","headers":{"host":"127.0.0.1:3012","accept":"text/plain, */*; q=0.01","x-session-id":"fb531a0886313888c3c08ba8a82031fb7a37b8d9ea979151f65f88b1a4f90b83","x-requested-with":"XMLHttpRequest","accept-encoding":"gzip, deflate","accept-language":"en-us","content-type":"application/json","origin":"http://127.0.0.1:3012","content-length":"26","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3","referer":"http://127.0.0.1:3012/","connection":"keep-alive","cookie":"__utma=96992031.1242794869.1372439571.1414895047.1414907019.4"}}]
+[1433735131.978][2015-06-07 20:45:31][joeretina-2.local][User][transaction][user_forgot_password][redsnake609][{"key":"7210b89f03013272dffc3ba0b48b4de6a1b10bdc9ead535744297adb022be09f","ip":"127.0.0.1","headers":{"host":"127.0.0.1:3012","accept":"text/plain, */*; q=0.01","x-session-id":"fb531a0886313888c3c08ba8a82031fb7a37b8d9ea979151f65f88b1a4f90b83","x-requested-with":"XMLHttpRequest","accept-encoding":"gzip, deflate","accept-language":"en-us","content-type":"application/json","origin":"http://127.0.0.1:3012","content-length":"26","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3","referer":"http://127.0.0.1:3012/","connection":"keep-alive","cookie":"__utma=9699031.124294869.172439571.141895047.141407019.4"}}]
 ```
 
 ## user_password_reset
@@ -1002,8 +1002,98 @@ The `user_forgot_password` transaction log entry has the username in the `msg` c
 The `user_password_reset` transaction log entry has the username in the `msg` column, and the user's recovery key in the `data` column as a property named `key` in the encoded JSON text.  Example:
 
 ```
-[1433735131.978][2015-06-07 20:45:31][joeretina-2.local][User][transaction][user_password_reset][redsnake609][{"key":"7210b89f03013272dffc3ba0b48b4de6a1b10bdc9ead535744297adb022be09f","ip":"127.0.0.1","headers":{"host":"127.0.0.1:3012","accept":"text/plain, */*; q=0.01","x-session-id":"fb531a0886313888c3c08ba8a82031fb7a37b8d9ea979151f65f88b1a4f90b83","x-requested-with":"XMLHttpRequest","accept-encoding":"gzip, deflate","accept-language":"en-us","content-type":"application/json","origin":"http://127.0.0.1:3012","content-length":"26","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3","referer":"http://127.0.0.1:3012/","connection":"keep-alive","cookie":"__utma=96992031.1242794869.1372439571.1414895047.1414907019.4"}}]
+[1433735131.978][2015-06-07 20:45:31][joeretina-2.local][User][transaction][user_password_reset][redsnake609][{"key":"7210b89f03013272dffc3ba0b48b4de6a1b10bdc9ead535744297adb022be09f","ip":"127.0.0.1","headers":{"host":"127.0.0.1:3012","accept":"text/plain, */*; q=0.01","x-session-id":"fb531a0886313888c3c08ba8a82031fb7a37b8d9ea979151f65f88b1a4f90b83","x-requested-with":"XMLHttpRequest","accept-encoding":"gzip, deflate","accept-language":"en-us","content-type":"application/json","origin":"http://127.0.0.1:3012","content-length":"26","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/600.6.3 (KHTML, like Gecko) Version/8.0.6 Safari/600.6.3","referer":"http://127.0.0.1:3012/","connection":"keep-alive","cookie":"__utma=9692031.124794869.137249571.141495047.141407019.4"}}]
 ```
+
+# External User Login Systems
+
+If you already have an existing user login system, perhaps a company-wide [SSO](https://en.wikipedia.org/wiki/Single_sign-on) (single sign-on) system, you can provide a simple REST API bridge in order to link to it from this module.  Meaning, you can use your own external system for user login and identification, and pass the user information back to this module securely in the background, effectively synchronizing the two databases.  Then this module transparently logs the user in and creates a session as per usual.
+
+The general workflow is:
+
+1. A user loads your Node.js web application in a browser.
+2. Your client-side JavaScript code detects that the user has no active session cookie for your app, or it has expired.
+3. Instead of showing a usual login form, your client-side code makes an API call to: `user/external_login`.
+4. The `user/external_login` code makes a server-to-server HTTP GET request to a URL that you specify.
+	* The code sends along all the cookies sent from the browser to your API.
+	* If your API returns user information, it is used to update the local user data and log the user in right away.
+	* If your API returns a redirect URL, this is passed back to the browser along with our return URL.
+
+The basic idea is that your external API is queried for user information instead of displaying a login page to the user.  Any cookies from the browser are passed along to your API (it assumes you store a cookie on the top-level domain on which you are also serving your app).  If your API then returns valid user information, it is immediately updated in local storage, and the user is immediately logged in.  However, if your API doesn't recognize the user, then it can provide a redirect URL to navigate the browser to (i.e. your own external login page, separate from your app).
+
+The first step is configuring your client-side JavaScript code.  You should go through the normal process of detecting a session cookie, and if found, use the [user/resume_session](#resume_session) API to resume the session as per usual.  But if no cookie is found or the session is expired, then instead of showing the user a standard login form, send another HTTP POST call to `user/external_login`.  The browser should include any relevant cookies.
+
+The next step is activating the external login feature by specifying a fully-qualified URL to your API endpoint, which will provide the user bridge.  This should go into the `external_user_api` configuration parameter.  Example:
+
+```js
+{
+	"external_user_api": "http://mycompany.com/usermanager/login-from-app.php"
+}
+```
+
+When called via HTTP GET, your API is expected to return one of two JSON responses: an actual user record, or a redirect URL.  Here are the two responses explained, with examples:
+
+## Returning User Information
+
+If you detect that user is already logged in via your system (i.e. the cookies passed along to your API correspond to an active session) then you should return a JSON record that describes the user.  It should contain the following:
+
+```js
+{
+	"code": 0,
+	"username": "jsmith",
+	"user": {
+		"full_name": "John Smith",
+		"email": "test@email.com",
+		"avatar": "http://mycompany.com/users/jsmith/avatar.png",
+		"privileges": {
+			"admin": 1
+		}
+	}
+}
+```
+
+Here are descriptions of the JSON properties:
+
+| Property Name | Description |
+|---------------|-------------|
+| `code` | This represents the error code, and should be set to `0` upon success. |
+| `username` | The username of the user, which should contain only alphanumeric characters, dashes and periods. |
+| `user` | An object containing more information about the user. |
+| `full_name` | The user's first and last names as a single combined string. |
+| `email` | The user's e-mail address. |
+| `avatar` | This is optional, and may contain a fully-qualified URL to an avatar image for the user. |
+| `privileges` | An object containing a set of privileges for the user.  See [Privileges](#privileges) above. |
+
+At this point the user information will be saved to local data storage, and the user will be logged in (a new session will be created, and the session ID returned to the client).
+
+The API response back to the browser will be identical to the one sent by the [user/resume_session](#resume_session) call.  Your client-side code should be expecting a user record, and a new user session ID, to store in a cookie or browser localStorage.
+
+## Redirecting to a Login Page
+
+If you detect that the user is *not* logged in (i.e. no cookie), or their session has expired, then you will need to trigger a browser redirect, so the user can enter their username and password into *your* external login page.  To do this, send back a JSON record formatted like this:
+
+```js
+{
+	"code": 0,
+	"location": "http://mycompany.com/usermanager/login.php?return="
+}
+```
+
+So here you need to specify a fully-qualified URL to your own login form page where the user can enter their username and password.  Please include the URL in the `location` JSON parameter, rather than sending a HTTP 302.  Also, your login page URL needs to accept an encoded "return URL" appended to the end.  This is so your login system knows where to redirect back to upon successful login.  The return URL will be added automatically before the final URL is sent back to the browser for the client-side redirect.
+
+Your client-side app code needs to detect the `location` property when it is returned, and redirect the browser to the URL provided.  Since this API call is typically initiated via AJAX / XHR, a standard HTTP 302 server response will not trigger a browser window redirect, so some JavaScript code is required to interpret the response and redirect the user.
+
+The idea here is that after the user logs in successfully via your login page, they'll have a session cookie created.  So when they arrive back at your Node.js app, we'll start the same user verification process again, and request your `external_user_api` URL via HTTP GET again.  But this time, the user will have a valid cookie, so your API should return actual user information (see [Returning User Information](#returning-user-information) above), and the user will finally be logged in properly.
+
+## Logging Out
+
+When an external user management system is integrated, and the user clicks the "Logout" button in the UI, after the internal session is deleted they will be redirected to your `external_user_api` URL straight from the browser, but with a `logout=1` query string parameter appended.  Example:
+
+```
+http://mycompany.com/usermanager/login-from-app.php?logout=1
+```
+
+It is expected that your bridge API will then redirect the user to the appropriate logout page so their session can be deleted and cookies cleaned up.
 
 # License
 
