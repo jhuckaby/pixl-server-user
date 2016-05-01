@@ -1273,6 +1273,9 @@ module.exports = Class.create({
 			self.storage.get('users/' + self.normalizeUsername(session.username), function(err, user) {
 				if (err) return callback(err, null);
 				
+				// get session_id out of args.params, so it doesn't interfere with API calls
+				delete args.params.session_id;
+				
 				// pass both session and user to callback
 				callback(null, session, user);
 			} );
