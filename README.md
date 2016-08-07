@@ -104,6 +104,12 @@ The `sort_global_users` property, when set to `true` (also the default value), w
 
 Note that keeping the global user list sorted is disk intensive, so this is only suitable for small-to-medium servers, up to 10,000 users or so.  Any larger and this property should be set to `false`, in which case users are sorted by their creation date (newest users at the top).
 
+## use_bcrypt
+
+The `use_bcrypt` property, when set to `true` (also the default value), will use the [bcrypt-node](https://www.npmjs.com/package/bcrypt-node) module to hash passwords.  This is an extremely secure but CPU intensive hashing algorithm, which resists brute force attacks.  It is recommended, but beware of the additional CPU overhead for creating user accounts and logging in.  Password generation and comparison each take about 250ms on my 2012 MacBook Pro.
+
+**Note:** If you enable this feature on an existing user database, all of your users will need to reset their passwords.
+
 ## smtp_hostname
 
 The `smtp_hostname` property specifies the SMTP (outgoing mail) server to use when sending e-mails.  This defaults to the outer [pixl-server](https://www.npmjs.com/package/pixl-server) configuration (it looks for the same `smtp_hostname` property), or if that is not set it falls back to `127.0.0.1`, which will use your local sendmail system.  See [Emails](#emails) below for details.

@@ -1,6 +1,6 @@
 {
 	"name": "pixl-server-user",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"description": "A basic user login and session management system for the pixl-server framework.",
 	"author": "Joseph Huckaby <jhuckaby@gmail.com>",
 	"homepage": "https://github.com/jhuckaby/pixl-server-user",
@@ -23,7 +23,8 @@
 		"pixl-class": "*",
 		"pixl-tools": "*",
 		"pixl-mail": "*",
-		"pixl-request": "*"
+		"pixl-request": "*",
+		"bcrypt-node": "^0.1.0"
 	},
 	"devDependencies": {
 		

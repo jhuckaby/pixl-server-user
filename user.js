@@ -9,6 +9,7 @@ var Component = require("pixl-server/component");
 var Tools = require("pixl-tools");
 var Mailer = require('pixl-mail');
 var Request = require('pixl-request');
+var bcrypt = require('bcrypt-node');
 
 module.exports = Class.create({
 	
@@ -22,6 +23,7 @@ module.exports = Class.create({
 		"max_forgot_passwords_per_hour": 3,
 		"free_accounts": 0,
 		"sort_global_users": 1,
+		"use_bcrypt": 1,
 		"valid_username_match": "^[\\w\\-\\.]+$",
 		"block_username_match": "^(abuse|admin|administrator|localhost|nobody|noreply|root|support|sysadmin|webmaster|www)$",
 		"email_templates": {
@@ -98,7 +100,7 @@ module.exports = Class.create({
 			user.active = 1;
 			user.created = user.modified = Tools.timeNow(true);
 			user.salt = Tools.generateUniqueID( 64, user.username );
-			user.password = Tools.digestHex( '' + user.password + user.salt );
+			user.password = self.generatePasswordHash( user.password, user.salt );
 			user.privileges = Tools.copyHash( self.config.get('default_privileges') || {} );
 			
 			args.user = user;
@@ -169,8 +171,7 @@ module.exports = Class.create({
 				return self.doError('login', "Account is locked out.  Please reset your password to unlock it.", callback);
 			}
 			
-			var phash = Tools.digestHex( '' + params.password + user.salt );
-			if (phash != user.password) {
+			if (!self.comparePasswords(params.password, user.password, user.salt)) {
 				// incorrect password
 				// (throttle this to prevent abuse)
 				var date_code = Math.floor( Tools.timeNow() / 3600 );
@@ -379,8 +380,7 @@ module.exports = Class.create({
 				return self.doError('user', "Username mismatch.", callback);
 			}
 			
-			var phash = Tools.digestHex( '' + updates.old_password + user.salt );
-			if (phash != user.password) {
+			if (!self.comparePasswords(updates.old_password, user.password, user.salt)) {
 				return self.doError('login', "Your password is incorrect.", callback);
 			}
 			
@@ -395,7 +395,7 @@ module.exports = Class.create({
 				// check for password change
 				if (updates.new_password) {
 					updates.salt = Tools.generateUniqueID( 64, user.username );
-					updates.password = Tools.digestHex( '' + updates.new_password + updates.salt );
+					updates.password = self.generatePasswordHash( updates.new_password, updates.salt );
 					changed_password = true;
 				} // change password
 				else delete updates.password;
@@ -649,7 +649,7 @@ module.exports = Class.create({
 					
 					// update user record
 					user.salt = Tools.generateUniqueID( 64, user.username );
-					user.password = Tools.digestHex( '' + params.new_password + user.salt );
+					user.password = self.generatePasswordHash( params.new_password, user.salt );
 					user.modified = Tools.timeNow(true);
 					
 					// remove throttle lock
@@ -732,7 +732,7 @@ module.exports = Class.create({
 				new_user.active = 1;
 				new_user.created = new_user.modified = Tools.timeNow(true);
 				new_user.salt = Tools.generateUniqueID( 64, new_user.username );
-				new_user.password = Tools.digestHex( '' + new_user.password + new_user.salt );
+				new_user.password = self.generatePasswordHash( new_user.password, new_user.salt );
 				new_user.privileges = new_user.privileges || Tools.copyHash( self.config.get('default_privileges') || {} );
 				
 				args.admin_user = admin_user;
@@ -830,7 +830,7 @@ module.exports = Class.create({
 					// check for password change
 					if (updates.new_password) {
 						updates.salt = Tools.generateUniqueID( 64, user.username );
-						updates.password = Tools.digestHex( '' + updates.new_password + updates.salt );
+						updates.password = self.generatePasswordHash( updates.new_password, updates.salt );
 					} // change password
 					else delete updates.password;
 					
@@ -1305,6 +1305,30 @@ module.exports = Class.create({
 		this.logError( code, msg );
 		callback({ code: code, description: msg });
 		return false;
+	},
+	
+	generatePasswordHash: function(password, salt) {
+		// generate crypto hash of password given plain password and salt string
+		if (this.config.get('use_bcrypt')) {
+			// use extremely secure but CPU expensive bcrypt algorithm
+			return bcrypt.hashSync( password + salt );
+		}
+		else {
+			// use weaker but fast salted SHA-256 algorithm
+			return Tools.digestHex( password + salt, 'sha256' );
+		}
+	},
+	
+	comparePasswords: function(password, hash, salt) {
+		// compare passwords for login, given plaintext, pw hash and user salt
+		if (this.config.get('use_bcrypt')) {
+			// use extremely secure but CPU expensive bcrypt algorithm
+			return bcrypt.compareSync(password + salt, hash);
+		}
+		else {
+			// use weaker but fast salted SHA-256 algorithm
+			return (hash == this.generatePasswordHash(password, salt));
+		}
 	},
 	
 	shutdown: function(callback) {
