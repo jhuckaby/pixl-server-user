@@ -196,7 +196,7 @@ module.exports = Class.create({
 				return;
 			}
 			if (!user.active) {
-				return self.doError('login', "User account is disabled: " + session.username, callback);
+				return self.doError('login', "User account is disabled: " + params.username, callback);
 			}
 			
 			args.user = user;
