@@ -51,6 +51,7 @@ module.exports = Class.create({
 		
 		// setup SMTP mailer
 		this.mail = new Mailer( this.config.get('smtp_hostname') || this.server.config.get('smtp_hostname') || "127.0.0.1" );
+		this.mail.setOptions( this.server.config.get('mail_options') || {} );
 		
 		// hook system for integrating with outer webapp
 		this.hooks = {};
