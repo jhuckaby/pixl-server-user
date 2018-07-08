@@ -342,7 +342,7 @@ module.exports = Class.create({
 						self.logTransaction('user_login', session.username, self.getClientInfo(args));
 						
 						// set session expiration
-						if (new_exp_day) {
+						if (new_exp_day && self.storage.config.get('expiration_updates')) {
 							self.storage.expire( 'sessions/' + session.id, expiration_date );
 						}
 						
