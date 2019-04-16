@@ -305,7 +305,7 @@ module.exports = Class.create({
 				return self.doError('login', "User account is disabled: " + session.username, callback);
 			}
 			if (user.force_password_reset) {
-				return self.doError('login', "Account is locked out.  Please reset your password to unlock it.");
+				return self.doError('login', "Account is locked out.  Please reset your password to unlock it.", callback);
 			}
 			
 			args.user = user;
