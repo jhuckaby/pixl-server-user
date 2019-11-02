@@ -50,7 +50,10 @@ module.exports = Class.create({
 		this.web = this.server.WebServer;
 		
 		// setup SMTP mailer
-		this.mail = new Mailer( this.config.get('smtp_hostname') || this.server.config.get('smtp_hostname') || "127.0.0.1" );
+		this.mail = new Mailer(
+			this.config.get('smtp_hostname') || this.server.config.get('smtp_hostname') || "127.0.0.1",
+			this.config.get('smtp_port') || this.server.config.get('smtp_port') || 25
+		);
 		this.mail.setOptions( this.server.config.get('mail_options') || {} );
 		
 		// hook system for integrating with outer webapp
