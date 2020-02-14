@@ -25,7 +25,7 @@ module.exports = Class.create({
 		"sort_global_users": 1,
 		"use_bcrypt": 1,
 		"valid_username_match": "^[\\w\\-\\.]+$",
-		"block_username_match": "^(abuse|admin|administrator|localhost|nobody|noreply|root|support|sysadmin|webmaster|www)$",
+		"block_username_match": "^(abuse|admin|administrator|localhost|127\\.0\\.0\\.1|nobody|noreply|root|support|sysadmin|webmaster|www|god|staff|null|0|constructor|__defineGetter__|__defineSetter__|hasOwnProperty|__lookupGetter__|__lookupSetter__|isPrototypeOf|propertyIsEnumerable|toString|valueOf|__proto__|toLocaleString)$",
 		"email_templates": {
 			"welcome_new_user": "",
 			"changed_password": "",
