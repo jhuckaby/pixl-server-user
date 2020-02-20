@@ -1,6 +1,6 @@
 {
 	"name": "pixl-server-user",
-	"version": "1.0.12",
+	"version": "1.0.13",
 	"description": "A basic user login and session management system for the pixl-server framework.",
 	"author": "Joseph Huckaby <jhuckaby@gmail.com>",
 	"homepage": "https://github.com/jhuckaby/pixl-server-user",

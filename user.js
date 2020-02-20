@@ -1232,8 +1232,9 @@ module.exports = Class.create({
 			// email is enabled
 			args.config = this.server.config.get();
 			
-			this.mail.send( emails[name], args, function(err) {
-				if (err) self.logError('email', "Failed to send e-mail: " + err);
+			this.mail.send( emails[name], args, function(err, data) {
+				if (err) self.logError('email', "Failed to send e-mail: " + err, { name: name, data: data });
+				else self.logDebug(6, "Email sent successfully", { name: name, data: data });
 				if (callback) callback(err);
 			} );
 		}
