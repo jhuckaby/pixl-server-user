@@ -469,8 +469,7 @@ module.exports = Class.create({
 				return self.doError('user', "Username mismatch.", callback);
 			}
 			
-			var phash = Tools.digestHex( '' + params.password + user.salt );
-			if (phash != user.password) {
+			if (!self.comparePasswords(params.password, user.password, user.salt)) {
 				return self.doError('login', "Your password is incorrect.", callback);
 			}
 			
