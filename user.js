@@ -125,12 +125,12 @@ module.exports = Class.create({
 						self.logTransaction('user_create', user.username, 
 							self.getClientInfo(args, { user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } ) }));
 						
-						callback({ code: 0 });
-						
 						// add to master user list in the background
 						if (self.config.get('sort_global_users')) {
 							self.storage.listInsertSorted( 'global/users', { username: user.username }, ['username', 1], function(err) {
 								if (err) self.logError( 1, "Failed to add user to master list: " + err );
+								
+								callback({ code: 0 });
 								
 								// fire after hook in background
 								self.fireHook('after_create', args);
@@ -139,6 +139,8 @@ module.exports = Class.create({
 						else {
 							self.storage.listUnshift( 'global/users', { username: user.username }, function(err) {
 								if (err) self.logError( 1, "Failed to add user to master list: " + err );
+								
+								callback({ code: 0 });
 								
 								// fire after hook in background
 								self.fireHook('after_create', args);
@@ -494,13 +496,11 @@ module.exports = Class.create({
 							self.logDebug(6, "Successfully deleted user");
 							self.logTransaction('user_delete', user.username, self.getClientInfo(args));
 							
-							callback({ 
-								code: 0
-							});
-							
 							// remove from master user list in the background
 							self.storage.listFindCut( 'global/users', { username: user.username }, function(err) {
 								if (err) self.logError( 1, "Failed to remove user from master list: " + err );
+								
+								callback({ code: 0 });
 								
 								self.fireHook('after_delete', args);
 							} );
@@ -758,12 +758,12 @@ module.exports = Class.create({
 							self.logTransaction('user_create', new_user.username, 
 								self.getClientInfo(args, { user: Tools.copyHashRemoveKeys( new_user, { password: 1, salt: 1 } ) }));
 							
-							callback({ code: 0 });
-							
 							// add to master user list in the background
 							if (self.config.get('sort_global_users')) {
 								self.storage.listInsertSorted( 'global/users', { username: new_user.username }, ['username', 1], function(err) {
 									if (err) self.logError( 1, "Failed to add user to master list: " + err );
+									
+									callback({ code: 0 });
 									
 									// fire after hook in background
 									self.fireHook('after_create', args);
@@ -772,6 +772,8 @@ module.exports = Class.create({
 							else {
 								self.storage.listUnshift( 'global/users', { username: new_user.username }, function(err) {
 									if (err) self.logError( 1, "Failed to add user to master list: " + err );
+									
+									callback({ code: 0 });
 									
 									// fire after hook in background
 									self.fireHook('after_create', args);
@@ -917,13 +919,11 @@ module.exports = Class.create({
 							self.logDebug(6, "Successfully deleted user");
 							self.logTransaction('user_delete', user.username, self.getClientInfo(args));
 							
-							callback({ 
-								code: 0
-							});
-							
 							// remove from master user list in the background
 							self.storage.listFindCut( 'global/users', { username: user.username }, function(err) {
 								if (err) self.logError( 1, "Failed to remove user from master list: " + err );
+								
+								callback({ code: 0 });
 								
 								self.fireHook('after_delete', args);
 							} );
