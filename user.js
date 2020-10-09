@@ -1295,6 +1295,10 @@ module.exports = Class.create({
 				this.doError('api', "Missing parameter: " + key, callback);
 				return false;
 			}
+			if (params[key] === null) {
+				this.doError('api', "Null parameter: " + key, callback);
+				return false;
+			}
 			if (!params[key].toString().match(regexp)) {
 				this.doError('api', "Malformed parameter: " + key, callback);
 				return false;
