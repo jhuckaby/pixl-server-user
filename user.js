@@ -1106,107 +1106,131 @@ module.exports = Class.create({
 						}
 					}
 					
-					// sync user info
-					user.full_name = remote_user.full_name || remote_user.FullName || username;
-					user.email = remote_user.email || remote_user.Email || (username + '@' + self.server.hostname);
+					// copy to args for logging
+					args.user = user;
 					
-					// must reset all privileges here, as remote system may delete keys when privs are revoked
-					for (var key in user.privileges) {
-						user.privileges[key] = 0;
-					}
-					
-					// copy over privileges
-					var privs = remote_user.privileges || remote_user.Privileges || {};
-					for (var key in privs) {
-						var ckey = key.replace(/\W+/g, '_').toLowerCase();
-						user.privileges[ckey] = privs[key] ? 1 : 0;
-					}
-					
-					// copy over avatar url
-					user.avatar = json.avatar || json.Avatar || '';
-					
-					// save user locally
-					self.storage.put( path, user, function(err) {
-						if (err) return self.doError('user', "Failed to create user: " + err, callback);
+					var finish = function() {
+						// sync user info
+						user.full_name = remote_user.full_name || remote_user.FullName || username;
+						user.email = remote_user.email || remote_user.Email || (username + '@' + self.server.hostname);
 						
-						// copy to args for logging
-						args.user = user;
-						
-						if (new_user) {
-							self.logDebug(6, "Successfully created user: " + username);
-							self.logTransaction('user_create', username, 
-								self.getClientInfo(args, { user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } ) }));
+						// must reset all privileges here, as remote system may delete keys when privs are revoked
+						for (var key in user.privileges) {
+							user.privileges[key] = 0;
 						}
 						
-						// now perform a local login
-						self.fireHook('before_login', args, function(err) {
-							if (err) {
-								return self.doError('login', "Failed to login: " + err, callback);
+						// copy over privileges
+						var privs = remote_user.privileges || remote_user.Privileges || {};
+						for (var key in privs) {
+							var ckey = key.replace(/\W+/g, '_').toLowerCase();
+							user.privileges[ckey] = privs[key] ? 1 : 0;
+						}
+						
+						// copy over avatar url
+						user.avatar = json.avatar || json.Avatar || '';
+						
+						// save user locally
+						self.storage.put( path, user, function(err) {
+							if (err) return self.doError('user', "Failed to create user: " + err, callback);
+							
+							if (new_user) {
+								self.logDebug(6, "Successfully created user: " + username);
+								self.logTransaction('user_create', username, 
+									self.getClientInfo(args, { user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } ) }));
 							}
 							
-							// now create session
-							var now = Tools.timeNow(true);
-							var expiration_date = Tools.normalizeTime(
-								now + (86400 * self.config.get('session_expire_days')),
-								{ hour: 0, min: 0, sec: 0 }
-							);
-							
-							// create session id and object
-							var session_id = Tools.generateUniqueID( 64, username );
-							var session = {
-								id: session_id,
-								username: username,
-								ip: args.ip,
-								useragent: args.request.headers['user-agent'],
-								created: now,
-								modified: now,
-								expires: expiration_date
-							};
-							self.logDebug(6, "Logging user in: " + username + ": New Session ID: " + session_id, session);
-							
-							// store session object
-							self.storage.put('sessions/' + session_id, session, function(err, data) {
+							// now perform a local login
+							self.fireHook('before_login', args, function(err) {
 								if (err) {
-									return self.doError('user', "Failed to create session: " + err, callback);
+									return self.doError('login', "Failed to login: " + err, callback);
 								}
 								
-								// copy to args to logging
-								args.session = session;
+								// now create session
+								var now = Tools.timeNow(true);
+								var expiration_date = Tools.normalizeTime(
+									now + (86400 * self.config.get('session_expire_days')),
+									{ hour: 0, min: 0, sec: 0 }
+								);
 								
-								self.logDebug(6, "Successfully logged in", username);
-								self.logTransaction('user_login', username, self.getClientInfo(args));
-								
-								// set session expiration
-								self.storage.expire( 'sessions/' + session_id, expiration_date );
-								
-								callback( Tools.mergeHashes({ 
-									code: 0, 
+								// create session id and object
+								var session_id = Tools.generateUniqueID( 64, username );
+								var session = {
+									id: session_id,
 									username: username,
-									user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } ), 
-									session_id: session_id 
-								}, args.resp || {}) );
+									ip: args.ip,
+									useragent: args.request.headers['user-agent'],
+									created: now,
+									modified: now,
+									expires: expiration_date
+								};
+								self.logDebug(6, "Logging user in: " + username + ": New Session ID: " + session_id, session);
 								
-								self.fireHook('after_login', args);
-								
-								// add to master user list in the background
-								if (new_user) {
-									if (self.config.get('sort_global_users')) {
-										self.storage.listInsertSorted( 'global/users', { username: username }, ['username', 1], function(err) {
-											if (err) self.logError( 1, "Failed to add user to master list: " + err );
-											self.fireHook('after_create', args);
-										} );
+								// store session object
+								self.storage.put('sessions/' + session_id, session, function(err, data) {
+									if (err) {
+										return self.doError('user', "Failed to create session: " + err, callback);
 									}
+									
+									// copy to args to logging
+									args.session = session;
+									
+									self.logDebug(6, "Successfully logged in", username);
+									self.logTransaction('user_login', username, self.getClientInfo(args));
+									
+									// set session expiration
+									self.storage.expire( 'sessions/' + session_id, expiration_date );
+									
+									callback( Tools.mergeHashes({ 
+										code: 0, 
+										username: username,
+										user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } ), 
+										session_id: session_id 
+									}, args.resp || {}) );
+									
+									self.fireHook('after_login', args);
+									
+									// add to master user list in the background
+									if (new_user) {
+										if (self.config.get('sort_global_users')) {
+											self.storage.listInsertSorted( 'global/users', { username: username }, ['username', 1], function(err) {
+												if (err) self.logError( 1, "Failed to add user to master list: " + err );
+												self.fireHook('after_create', args);
+											} );
+										}
+										else {
+											self.storage.listUnshift( 'global/users', { username: username }, function(err) {
+												if (err) self.logError( 1, "Failed to add user to master list: " + err );
+												self.fireHook('after_create', args);
+											} );
+										}
+									} // new user
 									else {
-										self.storage.listUnshift( 'global/users', { username: username }, function(err) {
-											if (err) self.logError( 1, "Failed to add user to master list: " + err );
-											self.fireHook('after_create', args);
-										} );
+										self.fireHook('after_update', args);
 									}
-								} // new user
-								
-							} ); // save session
-						} ); // before_login
-					} ); // save user
+									
+								} ); // save session
+							} ); // before_login
+						} ); // save user
+					}; // finish
+					
+					// fire correct hook for action
+					if (new_user) {
+						self.fireHook('before_create', args, function(err) {
+							if (err) {
+								return self.doError('user', "Failed to create user: " + err, callback);
+							}
+							finish();
+						});
+					}
+					else {
+						self.fireHook('before_update', args, function(err) {
+							if (err) {
+								return self.doError('user', "Failed to update user: " + err, callback);
+							}
+							finish();
+						});
+					}
+					
 				} ); // user get
 			} // user is logged in
 			else {
