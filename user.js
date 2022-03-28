@@ -496,7 +496,7 @@ module.exports = Class.create({
 							self.logDebug(6, "Successfully deleted user");
 							self.logTransaction('user_delete', user.username, self.getClientInfo(args));
 							
-							// remove from master user list in the background
+							// remove from master user list
 							self.storage.listFindCut( 'global/users', { username: user.username }, function(err) {
 								if (err) self.logError( 1, "Failed to remove user from master list: " + err );
 								
@@ -919,7 +919,7 @@ module.exports = Class.create({
 							self.logDebug(6, "Successfully deleted user");
 							self.logTransaction('user_delete', user.username, self.getClientInfo(args));
 							
-							// remove from master user list in the background
+							// remove from master user list
 							self.storage.listFindCut( 'global/users', { username: user.username }, function(err) {
 								if (err) self.logError( 1, "Failed to remove user from master list: " + err );
 								
