@@ -538,7 +538,7 @@ module.exports = Class.create({
 			var date_code = Math.floor( Tools.timeNow() / 3600 );
 			if (user.fp_date_code && (date_code == user.fp_date_code) && (user.fp_count > self.config.get('max_forgot_passwords_per_hour'))) {
 				// lockout until next hour
-				return self.doError('login', "This feature is locked due to too many requests. Please try again later.");
+				return self.doError('login', "This feature is locked due to too many requests. Please try again later.", callback);
 			}
 			
 			args.user = user;
@@ -1075,7 +1075,7 @@ module.exports = Class.create({
 				var path = 'users/' + self.normalizeUsername(username);
 				
 				if (!username.match(self.usernameMatch)) {
-					return self.doError('user', "Username contains illegal characters: " + username);
+					return self.doError('user', "Username contains illegal characters: " + username, callback);
 				}
 				
 				self.logDebug(7, "Testing if user exists: " + path);
