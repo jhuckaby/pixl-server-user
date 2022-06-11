@@ -836,10 +836,24 @@ module.exports = Class.create({
 					if (updates.new_password) {
 						updates.salt = Tools.generateUniqueID( 64, user.username );
 						updates.password = self.generatePasswordHash( updates.new_password, updates.salt );
+						
+						// reset lockouts if password changed by admin
+						updates.unlock = true;
 					} // change password
 					else delete updates.password;
 					
 					delete updates.new_password;
+					
+					if (updates.unlock) {
+						// optionally "reset" lockouts on account
+						// (changing password triggers this as well)
+						delete user.force_password_reset;
+						delete user.fp_date_code;
+						delete user.fp_count;
+						delete user.fl_date_code;
+						delete user.fl_count;
+						delete updates.unlock;
+					}
 					
 					// apply updates
 					for (var key in updates) {
