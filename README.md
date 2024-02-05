@@ -1,44 +1,44 @@
 # Overview
 
-This module is a component for use in [pixl-server](https://www.npmjs.com/package/pixl-server).  It implements a server-side user login and management API, and is built atop the [pixl-server-api](https://www.npmjs.com/package/pixl-server-api) and [pixl-server-storage](https://www.npmjs.com/package/pixl-server-storage) components.  You still need to build a client-side UI to send requests to the API, but this is a great starting point for a webapp back-end.
+This module is a component for use in [pixl-server](https://www.github.com/jhuckaby/pixl-server).  It implements a server-side user login and management API, and is built atop the [pixl-server-api](https://www.github.com/jhuckaby/pixl-server-api) and [pixl-server-storage](https://www.github.com/jhuckaby/pixl-server-storage) components.  You still need to build a client-side UI to send requests to the API, but this is a great starting point for a webapp back-end.
 
-This document assumes you are already familiar with [pixl-server](https://www.npmjs.com/package/pixl-server) and the following three components:
+This document assumes you are already familiar with [pixl-server](https://www.github.com/jhuckaby/pixl-server) and the following three components:
 
-* [pixl-server-storage](https://www.npmjs.com/package/pixl-server-storage)
-* [pixl-server-web](https://www.npmjs.com/package/pixl-server-web)
-* [pixl-server-api](https://www.npmjs.com/package/pixl-server-api)
+* [pixl-server-storage](https://www.github.com/jhuckaby/pixl-server-storage)
+* [pixl-server-web](https://www.github.com/jhuckaby/pixl-server-web)
+* [pixl-server-api](https://www.github.com/jhuckaby/pixl-server-api)
 
 # Usage
 
 Use [npm](https://www.npmjs.com/) to install the module:
 
-```
+```sh
 npm install pixl-server pixl-server-storage pixl-server-web pixl-server-api pixl-server-user
 ```
 
 Here is a simple usage example.  Note that the component's official name is `User`, so that is what you should use for the configuration key, and for gaining access to the component via your server object.
 
-```javascript
-var PixlServer = require('pixl-server');
-var server = new PixlServer({
+```js
+const PixlServer = require('pixl-server');
+let server = new PixlServer({
 	
 	__name: 'MyServer',
 	__version: "1.0",
 	
 	config: {
-		"log_dir": "/var/log",
+		"log_dir": "/let/log",
 		"debug_level": 9,
 		
 		"Storage": {
 			"engine": "File",
 			"File": {
-				"base_dir": "/var/data/myserver"
+				"base_dir": "/let/data/myserver"
 			}
 		},
 		
 		"WebServer": {
 			"http_port": 80,
-			"http_htdocs_dir": "/var/www/html"
+			"http_htdocs_dir": "/let/www/html"
 		},
 		
 		"API": {
@@ -65,9 +65,9 @@ server.startup( function() {
 } );
 ```
 
-Notice how we are loading the [pixl-server](https://www.npmjs.com/package/pixl-server) parent module, and then loading our components into the `components` array, with `pixl-server-user` at the very bottom:
+Notice how we are loading the [pixl-server](https://www.github.com/jhuckaby/pixl-server) parent module, and then loading our components into the `components` array, with `pixl-server-user` at the very bottom:
 
-```javascript
+```js
 components: [
 	require('pixl-server-storage'),
 	require('pixl-server-web'),
@@ -112,13 +112,13 @@ The `use_bcrypt` property, when set to `true` (also the default value), will use
 
 ## smtp_hostname
 
-The `smtp_hostname` property specifies the SMTP (outgoing mail) server to use when sending e-mails.  This defaults to the outer [pixl-server](https://www.npmjs.com/package/pixl-server) configuration (it looks for the same `smtp_hostname` property), or if that is not set it falls back to `127.0.0.1`, which will use your local sendmail system.  See [Emails](#emails) below for details.
+The `smtp_hostname` property specifies the SMTP (outgoing mail) server to use when sending e-mails.  This defaults to the outer [pixl-server](https://www.github.com/jhuckaby/pixl-server) configuration (it looks for the same `smtp_hostname` property), or if that is not set it falls back to `127.0.0.1`, which will use your local sendmail system.  See [Emails](#emails) below for details.
 
 ## email_templates
 
 The `email_templates` property should be an object containing filesystem paths to e-mail templates, for each of the following e-mails: `welcome_new_user`, `changed_password` and `recover_password`.  Example:
 
-```javascript
+```js
 "email_templates": {
 	"welcome_new_user": "conf/emails/welcome_new_user.txt",
 	"changed_password": "conf/emails/changed_password.txt",
@@ -132,7 +132,7 @@ For details, see the [Emails](#emails) section below.
 
 The `default_privileges` property should be an object containing any privileges you want added to new user accounts by default.  Privileges are freeform key/value pairs, and up to you to define.  Example:
 
-```javascript
+```js
 "default_privileges": {
 	"admin": 0,
 	"view_things": 1,
@@ -144,9 +144,9 @@ The only predefined privilege is `admin`, which signifies the account is a full 
 
 # User Accounts
 
-User accounts are stored using the [pixl-server-storage](https://www.npmjs.com/package/pixl-server-storage) component.  They are identified using the following path: `users/USERNAME` where `USERNAME` is the lower-case name of the user.  A typical user record looks like this:
+User accounts are stored using the [pixl-server-storage](https://www.github.com/jhuckaby/pixl-server-storage) component.  They are identified using the following path: `users/USERNAME` where `USERNAME` is the lower-case name of the user.  A typical user record looks like this:
 
-```javascript
+```json
 {
 	"username": "tcruise",
 	"email": "tcruise@hollywood.com",
@@ -176,9 +176,9 @@ In general, as long as these standard properties are preserved, the user records
 
 ## Global User List
 
-When new users are first created, their usernames are added to a single master list.  This is stored in the [pixl-server-storage](https://www.npmjs.com/package/pixl-server-storage) component under the path: `global/users`.  It contains only usernames and nothing else:
+When new users are first created, their usernames are added to a single master list.  This is stored in the [pixl-server-storage](https://www.github.com/jhuckaby/pixl-server-storage) component under the path: `global/users`.  It contains only usernames and nothing else:
 
-```javascript
+```json
 [
 	{
 		"username": "redbird262"
@@ -203,7 +203,7 @@ If your configuration has the [sort_global_users](#sort_global_users) key set to
 
 Each user record has a `privileges` object, which can contain anything your application requires.  The only property used by the library is `admin`, which specifies if the user is an administrator or not.  Example:
 
-```javascript
+```js
 "privileges": {
 	"admin": 0,
 	"view_things": 1,
@@ -217,9 +217,9 @@ A user cannot set or update his/her own `privileges` object using the [create](#
 
 # Sessions
 
-When a user logs in with the [login](#login) API, a new session object is created, and stored via the [pixl-server-storage](https://www.npmjs.com/package/pixl-server-storage) component.  Session paths follow this pattern: `sessions/SESSION_ID` where `SESSION_ID` is a randomly generated unique ID.  Here is an example record:
+When a user logs in with the [login](#login) API, a new session object is created, and stored via the [pixl-server-storage](https://www.github.com/jhuckaby/pixl-server-storage) component.  Session paths follow this pattern: `sessions/SESSION_ID` where `SESSION_ID` is a randomly generated unique ID.  Here is an example record:
 
-```javascript
+```json
 {
 	"id": "099db662412794c89a8480b558cf7655c25863b12b4c23a4d3415905f7c78f5f",
 	"username": "jhuckaby",
@@ -239,11 +239,11 @@ A session may be "resumed" by calling the [resume_session](#resume_session) API.
 
 # Emails
 
-The user management system can be configured to send e-mails to users based on various events, such as new account signups, changing and resetting passwords.  Emails are sent using SMTP, via the [pixl-mail](https://www.npmjs.com/package/pixl-mail) package.  First, you need to specify a valid SMTP server in your configuration, using the [smtp_hostname](#smtp_hostname) property.
+The user management system can be configured to send e-mails to users based on various events, such as new account signups, changing and resetting passwords.  Emails are sent using SMTP, via the [pixl-mail](https://www.github.com/jhuckaby/pixl-mail) package.  First, you need to specify a valid SMTP server in your configuration, using the [smtp_hostname](#smtp_hostname) property.
 
-Then you need to provide up to three e-mail template files.  These are used to generate the headers and body of the e-mails.  They use a [placeholder substitution system](https://www.npmjs.com/package/pixl-tools#substitute) for bits of content such as the user's name.  You specify the paths to the e-mail template files using the [email_templates](#email_templates) configuration object:
+Then you need to provide up to three e-mail template files.  These are used to generate the headers and body of the e-mails.  They use a [placeholder substitution system](https://www.github.com/jhuckaby/pixl-tools#sub) for bits of content such as the user's name.  You specify the paths to the e-mail template files using the [email_templates](#email_templates) configuration object:
 
-```javascript
+```js
 "email_templates": {
 	"welcome_new_user": "conf/emails/welcome_new_user.txt",
 	"changed_password": "conf/emails/changed_password.txt",
@@ -342,10 +342,12 @@ When your application is first installed, you need to execute a few setup tasks.
 
 ## Creating an initial administrator
 
-You'll want to create an initial administrator user, who has full permissions.  This is typically done by the following code inserted into a command-line script which uses the [Standalone Mode](https://www.npmjs.com/package/pixl-server-storage#standalone-mode) of the [pixl-server-storage](https://www.npmjs.com/package/pixl-server-storage) component.
+You'll want to create an initial administrator user, who has full permissions.  This is typically done by the following code inserted into a command-line script which uses the [Standalone Mode](https://www.github.com/jhuckaby/pixl-server-storage#standalone-mode) of the [pixl-server-storage](https://www.github.com/jhuckaby/pixl-server-storage) component.
 
-```javascript
-var user = {
+```js
+const Tools = require('pixl-tools');
+
+let user = {
 	username: username,
 	password: password,
 	full_name: "Administrator",
@@ -364,15 +366,15 @@ storage.put( 'users/' + username, user, function(err) {
 } );
 ```
 
-You'll need to import the [pixl-tools](https://www.npmjs.com/package/pixl-tools) package for the [timeNow()](https://www.npmjs.com/package/pixl-tools#timenow), [generateUniqueID()](https://www.npmjs.com/package/pixl-tools#generateuniqueid) and [digestHex()](https://www.npmjs.com/package/pixl-tools#digesthex) functions used in the example above.
+You'll need to import the [pixl-tools](https://www.github.com/jhuckaby/pixl-tools) package for the [timeNow()](https://www.github.com/jhuckaby/pixl-tools#timenow), [generateUniqueID()](https://www.github.com/jhuckaby/pixl-tools#generateuniqueid) and [digestHex()](https://www.github.com/jhuckaby/pixl-tools#digesthex) functions used in the example above.
 
 ## Creating the initial user list
 
-The master user list, which is located in the storage component under `global/users` is actually automatically created when the first user is added.  However, it is recommended that you pre-create this list, so you can set the [List Page Size](https://www.npmjs.com/package/pixl-server-storage#list-page-size) to something higher than the default of `50`.
+The master user list, which is located in the storage component under `global/users` is actually automatically created when the first user is added.  However, it is recommended that you pre-create this list, so you can set the [List Page Size](https://www.github.com/jhuckaby/pixl-server-storage#list-page-size) to something higher than the default of `50`.
 
 The user list contains only usernames, so the list items are tiny in size.  It is therefore much more efficient if the list page size was something more like `100`.  You cannot change the list page size after the fact, so you must do it at initial server install.  To do this, add something like this to your command-line setup / install script:
 
-```javascript
+```js
 storage.listCreate( 'global/users', { list_size: 100 }, function(err) {
 	if (err) throw err;
 	console.log( "Global user list created successfully.\n" );
@@ -381,15 +383,15 @@ storage.listCreate( 'global/users', { list_size: 100 }, function(err) {
 
 ## Storage Maintenance
 
-In order for your sessions (and any other data records that you set expiration dates on) to be properly deleted when they expire, you need to enable maintenance on the storage component.  This is done by setting the [maintenance](https://www.npmjs.com/package/pixl-server-storage#maintenance) storage configuration property to a `HH::MM` formatted string, indicating the time of day at which it will perform its cleanup:
+In order for your sessions (and any other data records that you set expiration dates on) to be properly deleted when they expire, you need to enable maintenance on the storage component.  This is done by setting the [maintenance](https://www.github.com/jhuckaby/pixl-server-storage#maintenance) storage configuration property to a `HH::MM` formatted string, indicating the time of day at which it will perform its cleanup:
 
-```javascript
+```js
 {
 	"maintenance": "04:30" // run daily at 4:30 AM
 }
 ```
 
-For more information, please see the [Daily Maintenance](https://www.npmjs.com/package/pixl-server-storage#daily-maintenance) section of the [pixl-server-storage](https://www.npmjs.com/package/pixl-server-storage) component docs.
+For more information, please see the [Daily Maintenance](https://www.github.com/jhuckaby/pixl-server-storage#daily-maintenance) section of the [pixl-server-storage](https://www.github.com/jhuckaby/pixl-server-storage) component docs.
 
 # API
 
@@ -410,7 +412,7 @@ Here is the full list of APIs:
 
 Create a new user: `POST /api/user/create`
 
-```javascript
+```json
 {
 	"username": "tcruise",
 	"email": "tcruise@hollywood.com",
@@ -423,7 +425,7 @@ The `create` API creates a new user account, but is only accessible if the [free
 
 Example successful response:
 
-```javascript
+```json
 {
 	"code": 0
 }
@@ -433,7 +435,7 @@ Example successful response:
 
 Validate user and create a new session: `POST /api/user/login`
 
-```javascript
+```json
 {
 	"username": "tcruise",
 	"password": "topGun!"
@@ -444,7 +446,7 @@ The `login` API validates the user account exists and is active, and makes sure 
 
 Example successful response:
 
-```javascript
+```json
 {
 	"code": 0,
 	"username": "tcruise",
@@ -473,7 +475,7 @@ The `logout` API deletes an existing user session, effectively logging the user 
 
 Example successful response:
 
-```javascript
+```json
 {
 	"code": 0
 }
@@ -487,7 +489,7 @@ The `resume_session` API reloads an existing user session, effectively allowing 
 
 Example successful response:
 
-```javascript
+```json
 {
 	"code": 0,
 	"username": "tcruise",
@@ -507,7 +509,7 @@ The returned `session_id` can then be used for subsequent API calls.
 
 Update user data: `POST /api/user/update`
 
-```javascript
+```json
 {
 	"username": "tcruise",
 	"email": "tcruise@hollywood.com",
@@ -525,7 +527,7 @@ The API response also includes a copy of the updated user record, so you can ref
 
 Example successful response:
 
-```javascript
+```json
 {
 	"code": 0,
 	"user": {
@@ -545,7 +547,7 @@ Example successful response:
 
 Delete user account: `POST /api/user/delete`
 
-```javascript
+```json
 {
 	"username": "tcruise",
 	"password": "topGun!"
@@ -556,7 +558,7 @@ The `delete` API permanently deletes a user account, and logs the user out (dest
 
 Example successful response:
 
-```javascript
+```json
 {
 	"code": 0
 }
@@ -566,7 +568,7 @@ Example successful response:
 
 Send e-mail to reset password: `POST /api/user/forgot_password`
 
-```javascript
+```json
 {
 	"username": "tcruise",
 	"email": "tcruise@hollywood.com"
@@ -579,7 +581,7 @@ If everything checks out, the user is sent a [recover_password](#recover_passwor
 
 Example successful response:
 
-```javascript
+```json
 {
 	"code": 0
 }
@@ -589,7 +591,7 @@ Example successful response:
 
 Complete the password reset process: `POST /api/user/reset_password`
 
-```javascript
+```json
 {
 	"username": "tcruise",
 	"key": "3a43167a326b1eccd1c752f72064875656d80144b6f9527a185f2f6ac0c04003",
@@ -601,7 +603,7 @@ The `reset_password` API completes the forgot password / reset password workflow
 
 Example successful response:
 
-```javascript
+```json
 {
 	"code": 0
 }
@@ -611,7 +613,7 @@ Example successful response:
 
 Create user as an administrator: `POST /api/user/admin_create`
 
-```javascript
+```json
 {
 	"username": "tcruise",
 	"email": "tcruise@hollywood.com",
@@ -634,7 +636,7 @@ The `send_email` property is a boolean flag indicating whether the user should b
 
 Example successful response:
 
-```javascript
+```json
 {
 	"code": 0
 }
@@ -644,7 +646,7 @@ Example successful response:
 
 Update any user as an administrator: `POST /api/user/admin_update`
 
-```javascript
+```json
 {
 	"username": "tcruise",
 	"email": "tcruise@hollywood.com",
@@ -664,7 +666,7 @@ The API response also includes a copy of the updated user record, so you can ref
 
 Example successful response:
 
-```javascript
+```json
 {
 	"code": 0,
 	"user": {
@@ -684,7 +686,7 @@ Example successful response:
 
 Delete any user as an administrator: `POST /api/user/admin_delete`
 
-```javascript
+```json
 {
 	"username": "tcruise"
 }
@@ -694,7 +696,7 @@ The `admin_delete` API permanently deletes a user account, but it is only access
 
 Example successful response:
 
-```javascript
+```json
 {
 	"code": 0
 }
@@ -704,7 +706,7 @@ Example successful response:
 
 Fetch a user record as an administrator: `POST /api/user/admin_get_user`
 
-```javascript
+```json
 {
 	"username": "tcruise"
 }
@@ -716,7 +718,7 @@ The `admin_get_user` API fetches a single user record, for the purpose of displa
 
 Example successful response:
 
-```javascript
+```json
 {
 	"code": 0,
 	"user": {
@@ -736,7 +738,7 @@ Example successful response:
 
 Fetch multiple users as an administrator: `POST /api/user/admin_get_users`
 
-```javascript
+```json
 {
 	"offset": 0,
 	"limit": 50
@@ -751,7 +753,7 @@ The API response will contain a `rows` array consisting of one element per user,
 
 Example successful response:
 
-```javascript
+```json
 {
 	"code": 0,
 	"rows": [
@@ -803,9 +805,9 @@ Example successful response:
 
 # Adding Your Own APIs
 
-To add your own APIs, you should use the [pixl-server-api](https://www.npmjs.com/package/pixl-server-api) component.  You can call either `addHandler()` to register a single API handler method, or `addNamespace()` to declare an entire class as an API namespace (this is what the user component does).  Example:
+To add your own APIs, you should use the [pixl-server-api](https://www.github.com/jhuckaby/pixl-server-api) component.  You can call either `addHandler()` to register a single API handler method, or `addNamespace()` to declare an entire class as an API namespace (this is what the user component does).  Example:
 
-```javascript
+```js
 server.API.addHandler( 'my_custom_api', function(args, callback) {
 	// custom request handler for our API
 	callback({
@@ -815,13 +817,13 @@ server.API.addHandler( 'my_custom_api', function(args, callback) {
 } );
 ```
 
-See the [pixl-server-api](https://www.npmjs.com/package/pixl-server-api) documentation for more details.
+See the [pixl-server-api](https://www.github.com/jhuckaby/pixl-server-api) documentation for more details.
 
 ## Validating The Session
 
 To validate the current session, you can call the `loadSession()` method on the user component.  It should be accessible from your own component's API methods using this syntax:
 
-```
+```js
 this.server.User.loadSession(args, function(err, session, user) {
 	if (err) {
 		// an error occurred
@@ -840,7 +842,7 @@ All the "before" hooks require you to fire a callback.  If you pass an error to 
 
 To register a hook, call the `registerHook()` method, and provide the hook name (see below) and your own callback function:
 
-```javascript
+```js
 this.server.User.registerHook( 'before_create', function(args, callback) {
 	// do something here
 	callback();
@@ -859,11 +861,11 @@ All hooks are passed an `args` object containing the following:
 | `args.ips` | This will be set to an array of *all* the user's IP addresses. |
 | `args.query` | An object containing key/value pairs from the URL query string. |
 | `args.params` | All the HTTP POST parameters as key/value pairs. |
-| `args.files` | All the uploaded files as key/object pairs (see [args.files](https://www.npmjs.com/package/pixl-server-web#argsfiles)). |
+| `args.files` | All the uploaded files as key/object pairs (see [args.files](https://www.github.com/jhuckaby/pixl-server-web#argsfiles)). |
 | `args.cookies` | All the HTTP Cookies parsed into key/value pairs. |
 | `args.server` | The pixl-server object which handled the request. |
 
-This is largely the same as the `args` object passed to HTTP request handlers in the [pixl-server-web](https://www.npmjs.com/package/pixl-server-web) component.  For more details, see the [args](https://www.npmjs.com/package/pixl-server-web#args) section of those docs.
+This is largely the same as the `args` object passed to HTTP request handlers in the [pixl-server-web](https://www.github.com/jhuckaby/pixl-server-web) component.  For more details, see the [args](https://www.github.com/jhuckaby/pixl-server-web#args) section of those docs.
 
 Here is the list of supported hooks:
 
@@ -949,11 +951,11 @@ The `after_reset_password` hook is fired just after a user has successfully rese
 
 # Transaction Log
 
-The user management system makes use of the [pixl-server](https://www.npmjs.com/package/pixl-server) event log, by logging both debug messages and transactions.  See below for examples of all the transaction log entries.
+The user management system makes use of the [pixl-server](https://www.github.com/jhuckaby/pixl-server) event log, by logging both debug messages and transactions.  See below for examples of all the transaction log entries.
 
 All transactions will have the `code` column set to `transaction`, and the `msg` column usually set to the username.  The `data` column usually contains a JSON object with various information such as the user record and/or HTTP headers.
 
-For more details on the server event log format, see the [Logging](https://www.npmjs.com/package/pixl-server#logging) section of the [pixl-server](https://www.npmjs.com/package/pixl-server) docs.
+For more details on the server event log format, see the [Logging](https://www.github.com/jhuckaby/pixl-server#logging) section of the [pixl-server](https://www.github.com/jhuckaby/pixl-server) docs.
 
 ## user_create
 
@@ -1031,7 +1033,7 @@ The first step is configuring your client-side JavaScript code.  You should go t
 
 The next step is activating the external login feature by specifying a fully-qualified URL to your API endpoint, which will provide the user bridge.  This should go into the `external_user_api` configuration parameter.  Example:
 
-```js
+```json
 {
 	"external_user_api": "http://mycompany.com/usermanager/login-from-app.php"
 }
@@ -1043,7 +1045,7 @@ When called via HTTP GET, your API is expected to return one of two JSON respons
 
 If you detect that user is already logged in via your system (i.e. the cookies passed along to your API correspond to an active session) then you should return a JSON record that describes the user.  It should contain the following:
 
-```js
+```json
 {
 	"code": 0,
 	"username": "jsmith",
@@ -1078,7 +1080,7 @@ The API response back to the browser will be identical to the one sent by the [u
 
 If you detect that the user is *not* logged in (i.e. no cookie), or their session has expired, then you will need to trigger a browser redirect, so the user can enter their username and password into *your* external login page.  To do this, send back a JSON record formatted like this:
 
-```js
+```json
 {
 	"code": 0,
 	"location": "http://mycompany.com/usermanager/login.php?return="
@@ -1103,7 +1105,7 @@ It is expected that your bridge API will then redirect the user to the appropria
 
 # License
 
-The MIT License (MIT)
+**The MIT License (MIT)**
 
 Copyright (c) 2015 - 2016 Joseph Huckaby.
 
