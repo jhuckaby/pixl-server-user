@@ -94,6 +94,10 @@ module.exports = Class.create({
 			return this.doError('user', "Username is blocked: " + user.username, callback);
 		}
 		
+		// sanitize
+		user.email = user.email.replace(/<.+>/g, '');
+		user.full_name = user.full_name.replace(/<.+>/g, '');
+		
 		// first, make sure user doesn't already exist
 		this.storage.get(path, function(err, old_user) {
 			if (old_user) {
@@ -244,6 +248,10 @@ module.exports = Class.create({
 						// set session expiration
 						self.storage.expire( 'sessions/' + session_id, expiration_date );
 						
+						// sanitize
+						user.email = user.email.replace(/<.+>/g, '');
+						user.full_name = user.full_name.replace(/<.+>/g, '');
+						
 						callback( Tools.mergeHashes({ 
 							code: 0, 
 							username: user.username,
@@ -351,6 +359,10 @@ module.exports = Class.create({
 							self.storage.expire( 'sessions/' + session.id, expiration_date );
 						}
 						
+						// sanitize
+						user.email = user.email.replace(/<.+>/g, '');
+						user.full_name = user.full_name.replace(/<.+>/g, '');
+						
 						callback( Tools.mergeHashes({ 
 							code: 0, 
 							username: session.username,
@@ -416,6 +428,10 @@ module.exports = Class.create({
 				for (var key in updates) {
 					user[key] = updates[key];
 				}
+				
+				// sanitize
+				user.email = user.email.replace(/<.+>/g, '');
+				user.full_name = user.full_name.replace(/<.+>/g, '');
 				
 				// update user record
 				user.modified = Tools.timeNow(true);
@@ -707,6 +723,10 @@ module.exports = Class.create({
 			password: /.+/
 		}, callback)) return;
 		
+		// sanitize
+		new_user.email = new_user.email.replace(/<.+>/g, '');
+		new_user.full_name = new_user.full_name.replace(/<.+>/g, '');
+		
 		this.loadSession(args, function(err, session, admin_user) {
 			if (!session) {
 				return self.doError('session', "Session has expired or is invalid.", callback);
@@ -860,6 +880,10 @@ module.exports = Class.create({
 						user[key] = updates[key];
 					}
 					
+					// sanitize
+					user.email = user.email.replace(/<.+>/g, '');
+					user.full_name = user.full_name.replace(/<.+>/g, '');
+					
 					// update user record
 					user.modified = Tools.timeNow(true);
 					
@@ -979,6 +1003,10 @@ module.exports = Class.create({
 					return self.doError('user', "Failed to load user: " + err, callback);
 				}
 				
+				// sanitize
+				user.email = user.email.replace(/<.+>/g, '');
+				user.full_name = user.full_name.replace(/<.+>/g, '');
+				
 				// success, return user record
 				callback({
 					code: 0,
@@ -1036,6 +1064,10 @@ module.exports = Class.create({
 					// remove passwords and salts
 					for (var idx = 0, len = users.length; idx < len; idx++) {
 						users[idx] = Tools.copyHashRemoveKeys( users[idx], { password: 1, salt: 1 } );
+						
+						// sanitize
+						users[idx].email = users[idx].email.replace(/<.+>/g, '');
+						users[idx].full_name = users[idx].full_name.replace(/<.+>/g, '');
 					}
 					
 					// success, return users and list header
@@ -1127,6 +1159,10 @@ module.exports = Class.create({
 						// sync user info
 						user.full_name = remote_user.full_name || remote_user.FullName || username;
 						user.email = remote_user.email || remote_user.Email || (username + '@' + self.server.hostname);
+						
+						// sanitize
+						user.email = user.email.replace(/<.+>/g, '');
+						user.full_name = user.full_name.replace(/<.+>/g, '');
 						
 						// must reset all privileges here, as remote system may delete keys when privs are revoked
 						for (var key in user.privileges) {
@@ -1317,6 +1353,10 @@ module.exports = Class.create({
 				
 				// get session_id out of args.params, so it doesn't interfere with API calls
 				delete args.params.session_id;
+				
+				// sanitize
+				user.email = user.email.replace(/<.+>/g, '');
+				user.full_name = user.full_name.replace(/<.+>/g, '');
 				
 				// pass both session and user to callback
 				callback(null, session, user);
