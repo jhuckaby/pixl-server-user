@@ -54,7 +54,7 @@ module.exports = Class.create({
 			this.config.get('smtp_hostname') || this.server.config.get('smtp_hostname') || "127.0.0.1",
 			this.config.get('smtp_port') || this.server.config.get('smtp_port') || 25
 		);
-		this.mail.setOptions( this.server.config.get('mail_options') || {} );
+		this.mail.setOptions( this.server.config.get('mail_options') || this.server.config.get('mail_settings') || {} );
 		
 		// hook system for integrating with outer webapp
 		this.hooks = {};
