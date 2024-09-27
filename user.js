@@ -24,6 +24,7 @@ module.exports = Class.create({
 		"free_accounts": 0,
 		"sort_global_users": 1,
 		"use_bcrypt": 1,
+		"mail_logger": 0,
 		"valid_username_match": "^[\\w\\-\\.]+$",
 		"block_username_match": "^(abuse|admin|administrator|localhost|127\\.0\\.0\\.1|nobody|noreply|root|support|sysadmin|webmaster|www|god|staff|null|0|constructor|__defineGetter__|__defineSetter__|hasOwnProperty|__lookupGetter__|__lookupSetter__|isPrototypeOf|propertyIsEnumerable|toString|valueOf|__proto__|toLocaleString)$",
 		"email_templates": {
@@ -55,6 +56,7 @@ module.exports = Class.create({
 			this.config.get('smtp_port') || this.server.config.get('smtp_port') || 25
 		);
 		this.mail.setOptions( this.server.config.get('mail_options') || this.server.config.get('mail_settings') || {} );
+		if (this.config.get('mail_logger')) this.mail.attachLogAgent( this.logger );
 		
 		// hook system for integrating with outer webapp
 		this.hooks = {};
