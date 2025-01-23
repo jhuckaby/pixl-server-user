@@ -32,9 +32,7 @@ module.exports = Class.create({
 			"changed_password": "",
 			"recover_password": ""
 		},
-		"default_privileges": {
-			"admin": 0
-		}
+		"default_privileges": {}
 	},
 	
 	hooks: null,
@@ -401,69 +399,80 @@ module.exports = Class.create({
 			}
 			
 			if (!self.comparePasswords(updates.old_password, user.password, user.salt)) {
-				return self.doError('login', "Your password is incorrect.", callback);
+				return self.doError('user', "Your password is incorrect.", callback);
 			}
 			
-			args.user = user;
-			args.session = session;
+			// NOTE: Since we are now allowing the parent app to augment the user inside of loadSession,
+			// the user's privileges may be merged with roles -- we need to load a FRESH copy of the user
+			var path = 'users/' + self.normalizeUsername(user.username);
 			
-			self.fireHook('before_update', args, function(err) {
+			self.storage.get(path, function(err, user) {
 				if (err) {
-					return self.doError('user', "Failed to update user: " + err, callback);
+					return self.doError('user', "User not found: " + user.username, callback);
 				}
 				
-				// check for password change
-				if (updates.new_password) {
-					updates.salt = Tools.generateUniqueID( 64, user.username );
-					updates.password = self.generatePasswordHash( updates.new_password, updates.salt );
-					changed_password = true;
-				} // change password
-				else delete updates.password;
+				args.user = user;
+				args.session = session;
 				
-				delete updates.new_password;
-				delete updates.old_password;
-				
-				// don't allow user to update his own privs
-				delete updates.privileges;
-				
-				// apply updates
-				for (var key in updates) {
-					user[key] = updates[key];
-				}
-				
-				// sanitize
-				user.email = user.email.replace(/<.+>/g, '');
-				user.full_name = user.full_name.replace(/<.+>/g, '');
-				
-				// update user record
-				user.modified = Tools.timeNow(true);
-				
-				self.logDebug(6, "Updating user", user);
-				
-				self.storage.put( "users/" + self.normalizeUsername(user.username), user, function(err, data) {
+				self.fireHook('before_update', args, function(err) {
 					if (err) {
 						return self.doError('user', "Failed to update user: " + err, callback);
 					}
-				
-					self.logDebug(6, "Successfully updated user");
-					self.logTransaction('user_update', user.username, 
-						self.getClientInfo(args, { user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } ) }));
 					
-					callback({ 
-						code: 0, 
-						user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } )
-					});
+					// check for password change
+					if (updates.new_password) {
+						updates.salt = Tools.generateUniqueID( 64, user.username );
+						updates.password = self.generatePasswordHash( updates.new_password, updates.salt );
+						changed_password = true;
+					} // change password
+					else delete updates.password;
 					
-					if (changed_password) {
-						// send e-mail in background (no callback)
-						args.user = user;
-						args.date_time = (new Date()).toLocaleString();
-						self.sendEmail( 'changed_password', args );
-					} // changed_password
+					delete updates.new_password;
+					delete updates.old_password;
 					
-					self.fireHook('after_update', args);
-				} ); // updated user
-			} ); // hook before
+					// don't allow user to update his own privs or roles
+					delete updates.privileges;
+					delete updates.roles;
+					
+					// apply updates
+					for (var key in updates) {
+						user[key] = updates[key];
+					}
+					
+					// sanitize
+					user.email = user.email.replace(/<.+>/g, '');
+					user.full_name = user.full_name.replace(/<.+>/g, '');
+					
+					// update user record
+					user.modified = Tools.timeNow(true);
+					
+					self.logDebug(6, "Updating user", user);
+					
+					self.storage.put( path, user, function(err, data) {
+						if (err) {
+							return self.doError('user', "Failed to update user: " + err, callback);
+						}
+						
+						self.logDebug(6, "Successfully updated user");
+						self.logTransaction('user_update', user.username, 
+							self.getClientInfo(args, { user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } ) }));
+						
+						callback({ 
+							code: 0, 
+							user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } )
+						});
+						
+						if (changed_password) {
+							// send e-mail in background (no callback)
+							args.user = user;
+							args.date_time = (new Date()).toLocaleString();
+							self.sendEmail( 'changed_password', args );
+						} // changed_password
+						
+						self.fireHook('after_update', args);
+					} ); // updated user
+				} ); // hook before
+			} ); // load fresh user
 		} ); // loaded session
 	},
 	
@@ -1360,10 +1369,13 @@ module.exports = Class.create({
 				user.email = user.email.replace(/<.+>/g, '');
 				user.full_name = user.full_name.replace(/<.+>/g, '');
 				
+				// allow parent app to manipulate session and/or user
+				self.fireHook('after_load_session', { session, user });
+				
 				// pass both session and user to callback
 				callback(null, session, user);
-			} );
-		} );
+			} ); // load user
+		} ); // load session
 	},
 	
 	requireParams: function(params, rules, callback) {
