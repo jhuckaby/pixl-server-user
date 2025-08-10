@@ -18,6 +18,7 @@
 	* [Privileges](#privileges)
 - [Sessions](#sessions)
 	* [Resuming Sessions](#resuming-sessions)
+- [Cookies](#cookies)
 - [Emails](#emails)
 	* [welcome_new_user](#welcome_new_user)
 	* [changed_password](#changed_password)
@@ -313,6 +314,23 @@ The `id` is the randomly generated Session ID.  The `username` is the user who o
 ## Resuming Sessions
 
 A session may be "resumed" by calling the [resume_session](#resume_session) API.  This simply validates and extends an existing session, allowing the user to keep using it without requiring them to login again.  The session's `expires` property is extended out to N days past the current date on each resume (where N is [session_expire_days](#session_expire_days)).
+
+# Cookies
+
+Your application can optionally use pixl-server-user in cookie mode, which sets cookies in the responses to the `/user/login` and `/user/resume_session` API endpoints.  It will also delete the cookie for the `/user/logout` and `/user/delete` endpoints.  To use this system for your app, include a `cookie_settings` object in your configuration, with the following properties:
+
+```json
+"cookie_settings": {
+	"path": "/",
+	"secure": "auto",
+	"httpOnly": true,
+	"sameSite": "Lax"
+}
+```
+
+Setting `secure:"auto"` will automatically include the `Secure;` clause in the `Set-Cookie` header if the incoming HTTP request was secure.  The `Max-Age` clause is automatically set based on your [session_expire_days](#session_expire_days) configuration property.
+
+Note that when cookie mode is enabled, the `/user/login` and `/user/resume_session` API endpoints no longer return a `session_id` in the JSON response.  It is now included **only** in the cookie.
 
 # Emails
 

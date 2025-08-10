@@ -219,10 +219,8 @@ module.exports = Class.create({
 				
 				// dates
 				var now = Tools.timeNow(true);
-				var expiration_date = Tools.normalizeTime(
-					now + (86400 * self.config.get('session_expire_days')),
-					{ hour: 0, min: 0, sec: 0 }
-				);
+				var exp_sec = 86400 * self.config.get('session_expire_days');
+				var expiration_date = Tools.normalizeTime( now + exp_sec, { hour: 0, min: 0, sec: 0 } );
 				
 				// create session id and object
 				var session_id = Tools.generateUniqueID( 64, params.username );
@@ -253,12 +251,22 @@ module.exports = Class.create({
 						user.email = user.email.replace(/<.+>/g, '');
 						user.full_name = user.full_name.replace(/<.+>/g, '');
 						
-						callback( Tools.mergeHashes({ 
+						var output = Tools.mergeHashes({ 
 							code: 0, 
 							username: user.username,
 							user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } ), 
 							session_id: session_id 
-						}, args.resp || {}) );
+						}, args.resp || {});
+						
+						// use cookies instead
+						if (self.config.get('cookie_settings')) {
+							args.setCookie( 'session_id', session_id, Tools.mergeHashes( self.config.get('cookie_settings'), {
+								maxAge: exp_sec
+							} ) );
+							delete output.session_id;
+						}
+						
+						callback( output );
 						
 						args.session = session;
 						self.fireHook('after_login', args);
@@ -296,6 +304,13 @@ module.exports = Class.create({
 					self.logDebug(6, "Successfully logged out");
 					self.logTransaction('user_logout', session.username, self.getClientInfo(args));
 					
+					if (self.config.get('cookie_settings')) {
+						args.setCookie( 'session_id', session.id, Tools.mergeHashes( self.config.get('cookie_settings'), {
+							maxAge: 0,
+							expires: new Date(0)
+						} ) );
+					}
+					
 					callback({ code: 0 });
 					
 					self.fireHook('after_logout', args);
@@ -332,10 +347,8 @@ module.exports = Class.create({
 				
 				// update session, modified, expiration, etc.
 				var now = Tools.timeNow(true);
-				var expiration_date = Tools.normalizeTime(
-					now + (86400 * self.config.get('session_expire_days')),
-					{ hour: 0, min: 0, sec: 0 }
-				);
+				var exp_sec = 86400 * self.config.get('session_expire_days');
+				var expiration_date = Tools.normalizeTime( now + exp_sec, { hour: 0, min: 0, sec: 0 } );
 				session.modified = now;
 				
 				var new_exp_day = false;
@@ -364,12 +377,22 @@ module.exports = Class.create({
 						user.email = user.email.replace(/<.+>/g, '');
 						user.full_name = user.full_name.replace(/<.+>/g, '');
 						
-						callback( Tools.mergeHashes({ 
+						var output = Tools.mergeHashes({ 
 							code: 0, 
 							username: session.username,
 							user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } ), 
 							session_id: session.id 
-						}, args.resp || {}) );
+						}, args.resp || {});
+						
+						// use cookies instead
+						if (self.config.get('cookie_settings')) {
+							args.setCookie( 'session_id', session.id, Tools.mergeHashes( self.config.get('cookie_settings'), {
+								maxAge: exp_sec
+							} ) );
+							delete output.session_id;
+						}
+						
+						callback( output );
 						
 						self.fireHook('after_resume_session', args);
 					} // success
@@ -531,6 +554,13 @@ module.exports = Class.create({
 							// remove from master user list
 							self.storage.listFindCut( 'global/users', { username: user.username }, function(err) {
 								if (err) self.logError( 1, "Failed to remove user from master list: " + err );
+								
+								if (self.config.get('cookie_settings')) {
+									args.setCookie( 'session_id', session.id, Tools.mergeHashes( self.config.get('cookie_settings'), {
+										maxAge: 0,
+										expires: new Date(0)
+									} ) );
+								}
 								
 								callback({ code: 0 });
 								
