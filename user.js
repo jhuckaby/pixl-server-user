@@ -154,7 +154,7 @@ module.exports = Class.create({
 						
 						// send e-mail in background (no callback)
 						args.user = user;
-						args.self_url = self.server.WebServer.getSelfURL(args.request, '/');
+						args.self_url = self.server.config.get('base_app_url') + '/';
 						self.sendEmail( 'welcome_new_user', args );
 						
 					} // success
@@ -642,7 +642,7 @@ module.exports = Class.create({
 					
 					// add some things to args for email body placeholder substitution
 					args.user = user;
-					args.self_url = self.server.WebServer.getSelfURL(args.request, '/');
+					args.self_url = self.server.config.get('base_app_url') + '/';
 					args.date_time = (new Date()).toLocaleString();
 					args.recovery_key = recovery_key;
 					
@@ -849,7 +849,7 @@ module.exports = Class.create({
 							// send e-mail in background (no callback)
 							if (send_welcome_email) {
 								args.user = new_user;
-								args.self_url = self.server.WebServer.getSelfURL(args.request, '/');
+								args.self_url = self.server.config.get('base_app_url') + '/';
 								self.sendEmail( 'welcome_new_user', args );
 							}
 							
