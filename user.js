@@ -311,7 +311,7 @@ module.exports = Class.create({
 						} ) );
 					}
 					
-					callback({ code: 0 });
+					callback( Tools.mergeHashes({ code: 0 }, args.resp || {}) );
 					
 					self.fireHook('after_logout', args);
 				} ); // delete
@@ -324,7 +324,18 @@ module.exports = Class.create({
 		var self = this;
 		
 		this.loadSession(args, function(err, session, user) {
+			if (err && (err == "NO_SESSION")) {
+				// no session ID, just return no user or session info
+				return callback({ code: 0 });
+			}
 			if (!session) {
+				if (self.config.get('cookie_settings')) {
+					// delete invalid cookie
+					args.setCookie( 'session_id', session.id, Tools.mergeHashes( self.config.get('cookie_settings'), {
+						maxAge: 0,
+						expires: new Date(0)
+					} ) );
+				}
 				return self.doError('session', "Session has expired or is invalid.", callback);
 			}
 			if (!user) {
@@ -1388,10 +1399,13 @@ module.exports = Class.create({
 		// make sure session is valid
 		var self = this;
 		var session_id = args.cookies['session_id'] || args.request.headers['x-session-id'] || args.params.session_id || args.query.session_id;
-		if (!session_id) return callback( new Error("No Session ID could be found") );
+		if (!session_id) return callback( "NO_SESSION" );
 		
 		this.storage.get('sessions/' + session_id, function(err, session) {
-			if (err) return callback(err, null);
+			if (err) {
+				self.logError('user', "Failed to load session: " + err);
+				return callback(err, null);
+			}
 			
 			// also load user
 			self.storage.get('users/' + self.normalizeUsername(session.username), function(err, user) {
