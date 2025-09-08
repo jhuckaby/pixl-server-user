@@ -1411,8 +1411,11 @@ module.exports = Class.create({
 			self.storage.get('users/' + self.normalizeUsername(session.username), function(err, user) {
 				if (err) return callback(err, null);
 				
-				// get session_id out of args.params, so it doesn't interfere with API calls
+				// get session_id out of common places, so it doesn't interfere with API calls and isn't logged
 				delete args.params.session_id;
+				delete args.cookies['session_id'];
+				delete args.request.headers['x-session-id'];
+				delete args.request.headers['cookie'];
 				
 				// sanitize
 				user.email = user.email.replace(/<.+>/g, '');
