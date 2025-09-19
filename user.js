@@ -305,7 +305,7 @@ module.exports = Class.create({
 					self.logTransaction('user_logout', session.username, self.getClientInfo(args));
 					
 					if (self.config.get('cookie_settings')) {
-						args.setCookie( 'session_id', session.id, Tools.mergeHashes( self.config.get('cookie_settings'), {
+						args.setCookie( 'session_id', '', Tools.mergeHashes( self.config.get('cookie_settings'), {
 							maxAge: 0,
 							expires: new Date(0)
 						} ) );
@@ -331,7 +331,7 @@ module.exports = Class.create({
 			if (!session) {
 				if (self.config.get('cookie_settings')) {
 					// delete invalid cookie
-					args.setCookie( 'session_id', session.id, Tools.mergeHashes( self.config.get('cookie_settings'), {
+					args.setCookie( 'session_id', '', Tools.mergeHashes( self.config.get('cookie_settings'), {
 						maxAge: 0,
 						expires: new Date(0)
 					} ) );
@@ -567,7 +567,7 @@ module.exports = Class.create({
 								if (err) self.logError( 1, "Failed to remove user from master list: " + err );
 								
 								if (self.config.get('cookie_settings')) {
-									args.setCookie( 'session_id', session.id, Tools.mergeHashes( self.config.get('cookie_settings'), {
+									args.setCookie( 'session_id', '', Tools.mergeHashes( self.config.get('cookie_settings'), {
 										maxAge: 0,
 										expires: new Date(0)
 									} ) );
