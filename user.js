@@ -1360,7 +1360,10 @@ module.exports = Class.create({
 		
 		if (emails[name]) {
 			// email is enabled
-			args.config = this.server.config.get();
+			args.config = {
+				email_from: this.server.config.get('email_from'),
+				client: this.server.config.get('client')
+			};
 			
 			this.mail.send( emails[name], args, function(err, data) {
 				if (err) self.logError('email', "Failed to send e-mail: " + err, { name: name, data: data });
