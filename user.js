@@ -175,6 +175,11 @@ module.exports = Class.create({
 		
 		// load user first
 		this.storage.get('users/' + this.normalizeUsername(params.username), function(err, user) {
+			// always compare passwords first, to prevent timing attacks
+			args.perf.begin('compare');
+			var result = self.comparePasswords(params.password, user ? user.password : Tools.generateUniqueID(), user ? user.salt : Tools.generateUniqueID());
+			args.perf.end('compare');
+			
 			if (!user) {
 				return self.doError('login', "Username or password incorrect.", callback); // deliberately vague
 			}
@@ -182,7 +187,7 @@ module.exports = Class.create({
 				return self.doError('login', "Account is locked out.  Please reset your password to unlock it.", callback);
 			}
 			
-			if (!self.comparePasswords(params.password, user.password, user.salt)) {
+			if (!result) {
 				// incorrect password
 				// (throttle this to prevent abuse)
 				var date_code = Math.floor( Tools.timeNow() / 3600 );
@@ -233,7 +238,7 @@ module.exports = Class.create({
 					modified: now,
 					expires: expiration_date
 				};
-				self.logDebug(6, "Logging user in: " + params.username + ": New Session ID: " + session_id, session);
+				self.logDebug(6, "Logging user in: " + params.username, session);
 				
 				// store session object
 				self.storage.put('sessions/' + session_id, session, function(err, data) {
@@ -295,7 +300,7 @@ module.exports = Class.create({
 					return self.doError('logout', "Failed to logout: " + err, callback);
 				}
 				
-				self.logDebug(6, "Logging user out: " + session.username + ": Session ID: " + session.id);
+				self.logDebug(6, "Logging user out: " + session.username);
 				
 				// delete session object
 				self.storage.delete('sessions/' + session.id, function(err, data) {
@@ -368,7 +373,7 @@ module.exports = Class.create({
 					new_exp_day = true;
 				}
 				
-				self.logDebug(6, "Recovering session for: " + session.username, session);
+				self.logDebug(6, "Recovering session for: " + session.username);
 				
 				// store session object
 				self.storage.put('sessions/' + session.id, session, function(err, data) {
@@ -481,7 +486,8 @@ module.exports = Class.create({
 					// update user record
 					user.modified = Tools.timeNow(true);
 					
-					self.logDebug(6, "Updating user", user);
+					var user_stub = Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } );
+					self.logDebug(6, "Updating user", user_stub);
 					
 					self.storage.put( path, user, function(err, data) {
 						if (err) {
@@ -489,18 +495,14 @@ module.exports = Class.create({
 						}
 						
 						self.logDebug(6, "Successfully updated user");
-						self.logTransaction('user_update', user.username, 
-							self.getClientInfo(args, { user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } ) }));
+						self.logTransaction('user_update', user.username, self.getClientInfo(args, { user: user_stub }));
 						
-						callback({ 
-							code: 0, 
-							user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } )
-						});
+						callback({ code: 0, user: user_stub });
 						
 						if (changed_password) {
 							// send e-mail in background (no callback)
 							args.user = user;
-							args.date_time = (new Date()).toLocaleString();
+							args.date_time = (new Date()).toString();
 							self.sendEmail( 'changed_password', args );
 						} // changed_password
 						
@@ -553,7 +555,7 @@ module.exports = Class.create({
 				self.storage.delete('sessions/' + session.id, function(err, data) {
 					// ignore session delete error, proceed
 					
-					self.logDebug(6, "Deleting user", user);
+					self.logDebug(6, "Deleting user: " + user.username);
 					self.storage.delete( "users/" + self.normalizeUsername(user.username), function(err, data) {
 						if (err) {
 							return self.doError('user', "Failed to delete user: " + err, callback);
@@ -595,30 +597,41 @@ module.exports = Class.create({
 			email: /^\S+\@\S+$/
 		}, callback)) return;
 		
+		// delay responses randomly to prevent timing attacks
+		var delayedResponse = function(data) {
+			setTimeout( function() { callback(data); }, Math.floor( Math.random() * 250 ) );
+		};
+		
 		// load user first
 		this.storage.get('users/' + this.normalizeUsername(params.username), function(err, user) {
+			// send faux-success for errors to prevent "user exists" knowledge capture
 			if (!user) {
-				return self.doError('login', "User account not found.", callback); // deliberately vague
+				self.logError('forgot', "User account not found: " + params.username);
+				return delayedResponse({ code: 0 });
 			}
 			if (user.email.toLowerCase() != params.email.toLowerCase()) {
-				return self.doError('login', "User account not found.", callback); // deliberately vague
+				self.logError('forgot', "Emails do not match.", [ user.email.toLowerCase(), params.email.toLowerCase() ]);
+				return delayedResponse({ code: 0 });
 			}
 			if (!user.active) {
-				return self.doError('login', "User account is disabled: " + session.username, callback);
+				self.logError('forgot', "User account is disabled: " + params.username);
+				return delayedResponse({ code: 0 });
 			}
 			
 			// check API throttle
 			var date_code = Math.floor( Tools.timeNow() / 3600 );
 			if (user.fp_date_code && (date_code == user.fp_date_code) && (user.fp_count > self.config.get('max_forgot_passwords_per_hour'))) {
 				// lockout until next hour
-				return self.doError('login', "This feature is locked due to too many requests. Please try again later.", callback);
+				self.logError('forgot', "This feature is locked due to too many requests", params);
+				return delayedResponse({ code: 0 });
 			}
 			
 			args.user = user;
 			
 			self.fireHook('before_forgot_password', args, function(err) {
 				if (err) {
-					return self.doError('login', "Forgot password failed: " + err, callback);
+					self.logError('reset', "Failed to reset password: " + err);
+					return delayedResponse({ code: 'login', description: "Forgot password failed: " + err });
 				}
 				
 				// create special recovery hash and expiration date for it
@@ -638,15 +651,16 @@ module.exports = Class.create({
 					modified: now,
 					expires: expiration_date
 				};
-				self.logDebug(6, "Creating recovery key for: " + params.username + ": Key: " + recovery_key, recovery);
+				self.logDebug(9, "Creating recovery key for: " + params.username);
 				
 				// store recovery object
 				self.storage.put('password_recovery/' + recovery_key, recovery, function(err, data) {
 					if (err) {
-						return self.doError('user', "Failed to create recovery key: " + err, callback);
+						return delayedResponse({ code: 'user', description: "Failed to create recovery key: " + err });
 					}
 					
 					self.logDebug(6, "Successfully created recovery key");
+					delayedResponse({ code: 0 });
 					
 					// set session expiration
 					self.storage.expire( 'password_recovery/' + recovery_key, expiration_date );
@@ -654,17 +668,17 @@ module.exports = Class.create({
 					// add some things to args for email body placeholder substitution
 					args.user = user;
 					args.self_url = self.server.config.get('base_app_url') + '/';
-					args.date_time = (new Date()).toLocaleString();
+					args.date_time = (new Date()).toString();
 					args.recovery_key = recovery_key;
 					
 					// send e-mail to user
 					self.sendEmail( 'recover_password', args, function(err) {
 						if (err) {
-							return self.doError('email', err.message, callback);
+							self.logError('email', err.message);
+							return;
 						}
 						
 						self.logTransaction('user_forgot_password', params.username, self.getClientInfo(args, { key: recovery_key }));
-					 	callback({ code: 0 });
 					 	
 					 	// throttle this API to prevent abuse
 					 	if (date_code != user.fp_date_code) {
@@ -698,29 +712,43 @@ module.exports = Class.create({
 			key: /^[A-F0-9]{64}$/i
 		}, callback)) return;
 		
+		// delay responses randomly to prevent timing attacks
+		var delayedResponse = function(data) {
+			setTimeout( function() { callback(data); }, Math.floor( Math.random() * 250 ) );
+		};
+		var delayedError = function(code, description) {
+			self.logError(code, description);
+			delayedResponse({ code, description });
+		};
+		
 		// load user first
 		this.storage.get('users/' + this.normalizeUsername(params.username), function(err, user) {
 			if (!user) {
-				return self.doError('login', "User account not found.", callback);
+				self.logError('reset', "User account not found: " + params.username);
+				return delayedError('login', "Password reset failed."); // // deliberately vague
 			}
 			if (!user.active) {
-				return self.doError('login', "User account is disabled: " + session.username, callback);
+				self.logError('reset', "User account is disabled: " + params.username);
+				return delayedError('login', "Password reset failed."); // // deliberately vague
 			}
 			
 			// load recovery key, make sure it matches this user
 			self.storage.get('password_recovery/' + params.key, function(err, recovery) {
 				if (!recovery) {
-					return self.doError('login', "Password reset failed.", callback); // deliberately vague
+					self.logError('reset', "Failed to locate password recovery: " + params.key);
+					return delayedError('login', "Password reset failed."); // // deliberately vague
 				}
 				if (recovery.username != params.username) {
-					return self.doError('login', "Password reset failed.", callback); // deliberately vague
+					self.logError('reset', "Usernames to not match.", [ recovery.username, params.username ]);
+					return delayedError('login', "Password reset failed."); // // deliberately vague
 				}
 				
 				args.user = user;
 				
 				self.fireHook('before_reset_password', args, function(err) {
 					if (err) {
-						return self.doError('login', "Failed to reset password: " + err, callback);
+						self.logError('reset', "Failed to reset password: " + err);
+						return delayedError('login', "Password reset failed."); // // deliberately vague
 					}
 					
 					// update user record
@@ -731,27 +759,28 @@ module.exports = Class.create({
 					// remove throttle lock
 					delete user.force_password_reset;
 					
-					self.logDebug(6, "Updating user for password reset", user);
+					self.logDebug(6, "Updating user for password reset: " + user.username);
 					
 					self.storage.put( "users/" + self.normalizeUsername(user.username), user, function(err, data) {
 						if (err) {
-							return self.doError('user', "Failed to update user: " + err, callback);
+							self.logError('user', "Failed to update user: " + err);
+							return delayedError('login', "Password reset failed."); // // deliberately vague
 						}
 						self.logDebug(6, "Successfully updated user");
 						self.logTransaction('user_update', user.username, 
 							self.getClientInfo(args, { user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } ) }));
 						
 						// delete recovery key (one time use only!)
-						self.logDebug(6, "Deleting recovery key: " + params.key);
+						self.logDebug(6, "Deleting recovery key for user: " + user.username);
 						self.storage.delete('password_recovery/' + params.key, function(err, data) {
 							
 							// ignore error, call it done
 							self.logTransaction('user_password_reset', params.username, self.getClientInfo(args, { key: params.key }));
-						 	callback({ code: 0 });
+							delayedResponse({ code: 0 });
 							
 							// send e-mail in background (no callback)
 							args.user = user;
-							args.date_time = (new Date()).toLocaleString();
+							args.date_time = (new Date()).toString();
 							self.sendEmail( 'changed_password', args );
 							
 							// fire after hook
@@ -824,7 +853,7 @@ module.exports = Class.create({
 						return self.doError('user', "Failed to create user: " + err, callback);
 					}
 					
-					self.logDebug(6, "Creating user", new_user);
+					self.logDebug(6, "Creating user: " + new_user.username);
 					
 					self.storage.put( path, new_user, function(err, data) {
 						if (err) {
@@ -944,7 +973,8 @@ module.exports = Class.create({
 					// update user record
 					user.modified = Tools.timeNow(true);
 					
-					self.logDebug(6, "Admin updating user", user);
+					var user_stub = Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } );
+					self.logDebug(6, "Admin updating user: " + user.username, user_stub);
 					
 					self.storage.put( path, user, function(err, data) {
 						if (err) {
@@ -952,13 +982,9 @@ module.exports = Class.create({
 						}
 					
 						self.logDebug(6, "Successfully updated user");
-						self.logTransaction('user_update', user.username, 
-							self.getClientInfo(args, { user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } ) }));
+						self.logTransaction('user_update', user.username, self.getClientInfo(args, { user: user_stub }));
 						
-						callback({ 
-							code: 0, 
-							user: Tools.copyHashRemoveKeys( user, { password: 1, salt: 1 } )
-						});
+						callback({ code: 0, user: user_stub });
 						
 						self.fireHook('after_update', args);
 					} ); // updated user
@@ -1005,7 +1031,7 @@ module.exports = Class.create({
 						return self.doError('login', "Failed to delete user: " + err, callback);
 					}
 					
-					self.logDebug(6, "Deleting user", user);
+					self.logDebug(6, "Deleting user: " + user.username);
 					self.storage.delete( "users/" + self.normalizeUsername(user.username), function(err, data) {
 						if (err) {
 							return self.doError('user', "Failed to delete user: " + err, callback);
