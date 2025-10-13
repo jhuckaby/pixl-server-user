@@ -166,7 +166,9 @@ The `free_accounts` property controls whether the [create](#create) API is "free
 
 ## session_expire_days
 
-The `session_expire_days` property specifies the number of days that idle sessions should exist before being automatically deleted.  The default value is `30` days.
+The `session_expire_days` property specifies the number of days that sessions should exist before being automatically deleted.  The default value is `30` days.
+
+Please see the [Special Session Behavior](#special-session-behavior) section for special behavior based on a storage configuration setting.
 
 ## max_failed_logins_per_hour
 
@@ -313,7 +315,11 @@ The `id` is the randomly generated Session ID.  The `username` is the user who o
 
 ## Resuming Sessions
 
-A session may be "resumed" by calling the [resume_session](#resume_session) API.  This simply validates and extends an existing session, allowing the user to keep using it without requiring them to login again.  The session's `expires` property is extended out to N days past the current date on each resume (where N is [session_expire_days](#session_expire_days)).
+A session may be "resumed" by calling the [resume_session](#resume_session) API.  This simply validates and loads an existing session, allowing the user to keep using it until its expiration date.
+
+### Special Session Behavior
+
+If the app's [pixl-server-storage](https://github.com/jhuckaby/pixl-server-storage) configuration has the [expiration_updates](https://github.com/jhuckaby/pixl-server-storage#expiration_updates) property set to `true`, then the session's `expires` property is extended out to N days past the current date on each resume (where N is [session_expire_days](#session_expire_days)).
 
 # Cookies
 

@@ -367,8 +367,9 @@ module.exports = Class.create({
 				var expiration_date = Tools.normalizeTime( now + exp_sec, { hour: 0, min: 0, sec: 0 } );
 				session.modified = now;
 				
+				// only bump expiration forward if expiration_updates config prop is set
 				var new_exp_day = false;
-				if (expiration_date != session.expires) {
+				if ((expiration_date != session.expires) && self.storage.config.get('expiration_updates')) {
 					session.expires = expiration_date;
 					new_exp_day = true;
 				}
@@ -385,7 +386,7 @@ module.exports = Class.create({
 						self.logTransaction('user_login', session.username, self.getClientInfo(args));
 						
 						// set session expiration
-						if (new_exp_day && self.storage.config.get('expiration_updates')) {
+						if (new_exp_day) {
 							self.storage.expire( 'sessions/' + session.id, expiration_date );
 						}
 						
