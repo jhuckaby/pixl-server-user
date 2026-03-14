@@ -24,7 +24,7 @@
 		"pixl-tools": "^1.0.0",
 		"pixl-mail": "^1.1.0",
 		"pixl-request": "^2.3.1",
-		"bcrypt-node": "0.1.0"
+		"bcryptjs": "3.0.3"
 	},
 	"devDependencies": {}
 }

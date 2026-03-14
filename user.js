@@ -9,7 +9,7 @@ var Component = require("pixl-server/component");
 var Tools = require("pixl-tools");
 var Mailer = require('pixl-mail');
 var Request = require('pixl-request');
-var bcrypt = require('bcrypt-node');
+var bcrypt = require('bcryptjs');
 
 module.exports = Class.create({
 	
