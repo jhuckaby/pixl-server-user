@@ -24,6 +24,7 @@ module.exports = Class.create({
 		"free_accounts": 0,
 		"sort_global_users": 1,
 		"use_bcrypt": 1,
+		"use_csrf": 0,
 		"mail_logger": 0,
 		"self_delete": 1,
 		"valid_username_match": "^[\\w\\-\\.]+$",
@@ -108,7 +109,7 @@ module.exports = Class.create({
 			// now we can create the user
 			user.active = 1;
 			user.created = user.modified = Tools.timeNow(true);
-			user.salt = Tools.generateUniqueID( 64, user.username );
+			user.salt = Tools.generateUniqueID(64);
 			user.password = self.generatePasswordHash( user.password, user.salt );
 			user.privileges = Tools.copyHash( self.config.get('default_privileges') || {} );
 			
@@ -228,7 +229,7 @@ module.exports = Class.create({
 				var expiration_date = Tools.normalizeTime( now + exp_sec, { hour: 0, min: 0, sec: 0 } );
 				
 				// create session id and object
-				var session_id = Tools.generateUniqueID( 64, params.username );
+				var session_id = Tools.generateUniqueID(64);
 				var session = {
 					id: session_id,
 					username: params.username,
@@ -238,6 +239,11 @@ module.exports = Class.create({
 					modified: now,
 					expires: expiration_date
 				};
+				
+				if (self.config.get('use_csrf')) {
+					session.csrf_token = Tools.generateUniqueID(64);
+				}
+				
 				self.logDebug(6, "Logging user in: " + params.username, session);
 				
 				// store session object
@@ -269,6 +275,10 @@ module.exports = Class.create({
 								maxAge: exp_sec
 							} ) );
 							delete output.session_id;
+						}
+						
+						if (self.config.get('use_csrf')) {
+							output.csrf_token = session.csrf_token;
 						}
 						
 						callback( output );
@@ -328,6 +338,9 @@ module.exports = Class.create({
 		// validate existing session
 		var self = this;
 		
+		// skip csrf for this api (user doesn't have the csrf token yet)
+		args.skip_csrf = true;
+		
 		this.loadSession(args, function(err, session, user) {
 			if (err && (err == "NO_SESSION")) {
 				// no session ID, just return no user or session info
@@ -374,6 +387,11 @@ module.exports = Class.create({
 					new_exp_day = true;
 				}
 				
+				// session may need to be upgraded to csrf
+				if (self.config.get('use_csrf') && !session.csrf_token) {
+					session.csrf_token = Tools.generateUniqueID(64);
+				}
+				
 				self.logDebug(6, "Recovering session for: " + session.username);
 				
 				// store session object
@@ -407,6 +425,10 @@ module.exports = Class.create({
 								maxAge: exp_sec
 							} ) );
 							delete output.session_id;
+						}
+						
+						if (self.config.get('use_csrf')) {
+							output.csrf_token = session.csrf_token;
 						}
 						
 						callback( output );
@@ -462,7 +484,7 @@ module.exports = Class.create({
 					
 					// check for password change
 					if (updates.new_password) {
-						updates.salt = Tools.generateUniqueID( 64, user.username );
+						updates.salt = Tools.generateUniqueID(64);
 						updates.password = self.generatePasswordHash( updates.new_password, updates.salt );
 						changed_password = true;
 					} // change password
@@ -636,7 +658,7 @@ module.exports = Class.create({
 				}
 				
 				// create special recovery hash and expiration date for it
-				var recovery_key = Tools.generateUniqueID( 64, user.username );
+				var recovery_key = Tools.generateUniqueID(64);
 				
 				// dates
 				var now = Tools.timeNow(true);
@@ -753,7 +775,7 @@ module.exports = Class.create({
 					}
 					
 					// update user record
-					user.salt = Tools.generateUniqueID( 64, user.username );
+					user.salt = Tools.generateUniqueID(64);
 					user.password = self.generatePasswordHash( params.new_password, user.salt );
 					user.modified = Tools.timeNow(true);
 					
@@ -841,7 +863,7 @@ module.exports = Class.create({
 				// now we can create the user
 				new_user.active = 1;
 				new_user.created = new_user.modified = Tools.timeNow(true);
-				new_user.salt = Tools.generateUniqueID( 64, new_user.username );
+				new_user.salt = Tools.generateUniqueID(64);
 				new_user.password = self.generatePasswordHash( new_user.password, new_user.salt );
 				new_user.privileges = new_user.privileges || Tools.copyHash( self.config.get('default_privileges') || {} );
 				
@@ -941,7 +963,7 @@ module.exports = Class.create({
 					
 					// check for password change
 					if (updates.new_password) {
-						updates.salt = Tools.generateUniqueID( 64, user.username );
+						updates.salt = Tools.generateUniqueID(64);
 						updates.password = self.generatePasswordHash( updates.new_password, updates.salt );
 						
 						// reset lockouts if password changed by admin
@@ -1221,7 +1243,7 @@ module.exports = Class.create({
 							active: 1,
 							created: Tools.timeNow(true),
 							modified: Tools.timeNow(true),
-							salt: Tools.generateUniqueID( 64, username ),
+							salt: Tools.generateUniqueID(64),
 							password: Tools.generateUniqueID(64), // unused
 							privileges: Tools.copyHash( self.config.get('default_privileges') || {} )
 						};
@@ -1287,7 +1309,7 @@ module.exports = Class.create({
 								);
 								
 								// create session id and object
-								var session_id = Tools.generateUniqueID( 64, username );
+								var session_id = Tools.generateUniqueID(64);
 								var session = {
 									id: session_id,
 									username: username,
@@ -1428,13 +1450,20 @@ module.exports = Class.create({
 	loadSession: function(args, callback) {
 		// make sure session is valid
 		var self = this;
-		var session_id = args.cookies['session_id'] || args.request.headers['x-session-id'] || args.params.session_id || args.query.session_id;
+		var session_id = args.cookies['session_id'] || args.request.headers['x-session-id'] || args.params.session_id;
 		if (!session_id) return callback( "NO_SESSION" );
 		
 		this.storage.get('sessions/' + session_id, function(err, session) {
 			if (err) {
 				self.logError('user', "Failed to load session: " + err);
 				return callback(err, null);
+			}
+			
+			// csrf check
+			var csrf_token = args.request.headers['x-csrf-token'] || args.params.csrf_token || null;
+			if (self.config.get('use_csrf') && !args.request.method.match(/^(GET|HEAD)$/) && session.csrf_token && (csrf_token != session.csrf_token) && !args.skip_csrf) {
+				self.logError('user', "Failed to validate session: Invalid CSRF Token", { username: session.username, ips: args.ips });
+				return callback(new Error("Invalid session"), null);
 			}
 			
 			// also load user
@@ -1446,6 +1475,10 @@ module.exports = Class.create({
 				delete args.cookies['session_id'];
 				delete args.request.headers['x-session-id'];
 				delete args.request.headers['cookie'];
+				
+				// cleanup csrf token mess as well
+				delete args.params.csrf_token;
+				delete args.request.headers['x-csrf-token'];
 				
 				// sanitize
 				user.email = user.email.replace(/<.+>/g, '');

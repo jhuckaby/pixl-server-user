@@ -338,6 +338,20 @@ Setting `secure:"auto"` will automatically include the `Secure;` clause in the `
 
 Note that when cookie mode is enabled, the `/user/login` and `/user/resume_session` API endpoints no longer return a `session_id` in the JSON response.  It is now included **only** in the cookie.
 
+# CSRF Tokens
+
+To enable support for [CSRF Tokens](https://en.wikipedia.org/wiki/Cross-site_request_forgery), set the `use_csrf` configuration property to `true`:
+
+```json
+"use_csrf": true
+```
+
+This will generate a unique CSRF token in the session object when created, which will be passed to the client via the `/user/login` and `/user/resume_session` API responses.
+
+When enabled, all the User Manager APIs that modify data will require a valid CSRF token sent via the `X-CSRF-Token` request header, or a `csrf_token` POST / JSON parameter.  The token will be scrubbed before invoking the target API.
+
+The client web application needs to support reading the token at login, sending it along with API requests (including User Manager requests), and validating it server-side where applicable.
+
 # Emails
 
 The user management system can be configured to send e-mails to users based on various events, such as new account signups, changing and resetting passwords.  Emails are sent using SMTP, via the [pixl-mail](https://www.github.com/jhuckaby/pixl-mail) package.  First, you need to specify a valid SMTP server in your configuration, using the [smtp_hostname](#smtp_hostname) property.
