@@ -24,7 +24,7 @@ module.exports = Class.create({
 		"free_accounts": 0,
 		"sort_global_users": 1,
 		"use_bcrypt": 1,
-		"use_csrf": 0,
+		"use_csrf": 1,
 		"mail_logger": 0,
 		"self_delete": 1,
 		"valid_username_match": "^[\\w\\-\\.]+$",
