@@ -75,6 +75,13 @@ module.exports = Class.create({
 		return username.toString().toLowerCase().replace(/\W+/g, '');
 	},
 	
+	sanitizeUser: function(params) {
+		// clean user fields
+		if (params.email) params.email = String(params.email).replace(/<[^>]*>/g, '').trim();
+		if (params.full_name) params.full_name = String(params.full_name).replace(/<[^>]*>/g, '').trim();
+		if (params.icon) params.icon = String(params.icon).replace(/[^\w\-]+/g, '');
+	},
+	
 	api_create: function(args, callback) {
 		// create new user account
 		var self = this;
@@ -97,8 +104,7 @@ module.exports = Class.create({
 		}
 		
 		// sanitize
-		user.email = user.email.replace(/<.+>/g, '');
-		user.full_name = user.full_name.replace(/<.+>/g, '');
+		this.sanitizeUser(user);
 		
 		// first, make sure user doesn't already exist
 		this.storage.get(path, function(err, old_user) {
@@ -259,8 +265,7 @@ module.exports = Class.create({
 						self.storage.expire( 'sessions/' + session_id, expiration_date );
 						
 						// sanitize
-						user.email = user.email.replace(/<.+>/g, '');
-						user.full_name = user.full_name.replace(/<.+>/g, '');
+						self.sanitizeUser(user);
 						
 						var output = Tools.mergeHashes({ 
 							code: 0, 
@@ -409,8 +414,7 @@ module.exports = Class.create({
 						}
 						
 						// sanitize
-						user.email = user.email.replace(/<.+>/g, '');
-						user.full_name = user.full_name.replace(/<.+>/g, '');
+						self.sanitizeUser(user);
 						
 						var output = Tools.mergeHashes({ 
 							code: 0, 
@@ -503,8 +507,7 @@ module.exports = Class.create({
 					}
 					
 					// sanitize
-					user.email = user.email.replace(/<.+>/g, '');
-					user.full_name = user.full_name.replace(/<.+>/g, '');
+					self.sanitizeUser(user);
 					
 					// update user record
 					user.modified = Tools.timeNow(true);
@@ -833,8 +836,7 @@ module.exports = Class.create({
 		}, callback)) return;
 		
 		// sanitize
-		new_user.email = new_user.email.replace(/<.+>/g, '');
-		new_user.full_name = new_user.full_name.replace(/<.+>/g, '');
+		this.sanitizeUser(new_user);
 		
 		this.loadSession(args, function(err, session, admin_user) {
 			if (!session) {
@@ -990,8 +992,7 @@ module.exports = Class.create({
 					}
 					
 					// sanitize
-					user.email = user.email.replace(/<.+>/g, '');
-					user.full_name = user.full_name.replace(/<.+>/g, '');
+					self.sanitizeUser(user);
 					
 					// update user record
 					user.modified = Tools.timeNow(true);
@@ -1110,8 +1111,7 @@ module.exports = Class.create({
 				}
 				
 				// sanitize
-				user.email = user.email.replace(/<.+>/g, '');
-				user.full_name = user.full_name.replace(/<.+>/g, '');
+				self.sanitizeUser(user);
 				
 				// success, return user record
 				callback({
@@ -1172,8 +1172,7 @@ module.exports = Class.create({
 						users[idx] = Tools.copyHashRemoveKeys( users[idx], { password: 1, salt: 1 } );
 						
 						// sanitize
-						users[idx].email = users[idx].email.replace(/<.+>/g, '');
-						users[idx].full_name = users[idx].full_name.replace(/<.+>/g, '');
+						self.sanitizeUser(users[idx]);
 					}
 					
 					// success, return users and list header
@@ -1267,8 +1266,7 @@ module.exports = Class.create({
 						user.email = remote_user.email || remote_user.Email || (username + '@' + self.server.hostname);
 						
 						// sanitize
-						user.email = user.email.replace(/<.+>/g, '');
-						user.full_name = user.full_name.replace(/<.+>/g, '');
+						self.sanitizeUser(user);
 						
 						// must reset all privileges here, as remote system may delete keys when privs are revoked
 						for (var key in user.privileges) {
@@ -1481,8 +1479,7 @@ module.exports = Class.create({
 				delete args.request.headers['x-csrf-token'];
 				
 				// sanitize
-				user.email = user.email.replace(/<.+>/g, '');
-				user.full_name = user.full_name.replace(/<.+>/g, '');
+				self.sanitizeUser(user);
 				
 				// allow parent app to manipulate session and/or user
 				self.fireHook('after_load_session', { session, user });
