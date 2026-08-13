@@ -1535,7 +1535,19 @@ module.exports = Class.create({
 		// compare passwords for login, given plaintext, pw hash and user salt
 		if (this.config.get('use_bcrypt')) {
 			// use extremely secure but CPU expensive bcrypt algorithm
-			return bcrypt.compareSync(password + salt, hash);
+			// Note: compareSync() throws rather than returning false when the
+			// stored hash is absent, malformed, or was written in a bcrypt
+			// revision this library cannot parse.  Treat all of those as a
+			// failed comparison, so that one bad user record cannot take down
+			// the whole process by way of an uncaught exception.
+			try {
+				return bcrypt.compareSync(password + salt, hash);
+			}
+			catch (err) {
+				// some bcrypt implementations throw a bare string, not an Error
+				this.logError('login', "Password hash comparison failed: " + (err.message || err));
+				return false;
+			}
 		}
 		else {
 			// use weaker but fast salted SHA-256 algorithm
