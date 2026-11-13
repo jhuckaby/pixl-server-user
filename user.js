@@ -78,8 +78,8 @@ module.exports = Class.create({
 	sanitizeUser: function(params) {
 		// clean user fields: strip complete tags, and discard unclosed tags through end of input
 		// the negated character class also consumes newlines and nested opening brackets
-		if (params.email) params.email = String(params.email).replace(/<[^>]*(?:>|$)/g, '').trim();
-		if (params.full_name) params.full_name = String(params.full_name).replace(/<[^>]*(?:>|$)/g, '').trim();
+		if (params.email) params.email = String(params.email).replace(/<[^>]*(?:>|$)/g, '').replace(/[<>\"\:]+/g, '').trim();
+		if (params.full_name) params.full_name = String(params.full_name).replace(/<[^>]*(?:>|$)/g, '').replace(/\"+/g, "'").replace(/[<>\:]+/g, '').trim();
 		if (params.icon) params.icon = String(params.icon).replace(/[^\w\-]+/g, '');
 	},
 	
